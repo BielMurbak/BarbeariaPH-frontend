@@ -1,0 +1,21 @@
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="card shadow-lg" style="width: 18rem;">
+    <div class="card-body text-center">
+      <h5 class="card-title mb-3">Barbearia PH</h5>
+      <button type="button" class="btn btn-primary btn-lg" (click)="abrirModal()">Agendar Horário</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Agendamento -->
+<div class="modal-overlay" *ngIf="showModal" (click)="fecharModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4>Agendamento</h4>
+      <button class="btn-close" (click)="fecharModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Aqui você pode fazer seu agendamento!</p>
+    </div>
+  </div>
+</div>
