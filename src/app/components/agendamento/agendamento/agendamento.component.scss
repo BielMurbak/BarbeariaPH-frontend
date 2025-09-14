@@ -1,0 +1,221 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(167, 167, 167);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-agendamento {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  background: white;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 90%;
+  height: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modal-agendamento-left {
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ flex-direction: column;
+  padding: 30px;
+}
+
+.modal-agendamento-left p{
+text-align: center;
+}
+
+
+.modal-agendamento-left-mid{
+display:flex;
+flex-direction: column;
+align-items: center;
+position: relative;
+top:3em;
+}
+
+.modal-agendamento-left-low{
+  display:flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+position: relative;
+top:8em;
+}
+
+
+.modal-agendamento-right {
+  display: flex;
+  flex-direction: column;
+
+}
+
+.modal-agendamento-header {
+  background: #ffffff;
+  color: rgb(0, 0, 0);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  justify-content:space-between;
+  
+}
+
+.modal-agendamento-mid{
+  display:flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-agendamento-servicos-container {
+  width: 350px;
+  height: 60px;
+  max-width: 100%;
+  max-height: 100%;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  top:1em;
+
+  &:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+  }
+  
+  .icon {
+    font-size: 24px;
+    margin-right: 15px;
+  }
+  
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 1000;
+    color: #333;
+  }
+}
+
+
+
+.btn-voltar {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  
+  &:hover {
+    background: #5a6268;
+  }
+}
+
+.calendario {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+    &:hover {
+      background: #0056b3;
+    }
+  }
+  
+  span {
+    font-weight: bold;
+    text-transform: capitalize;
+  }
+}
+
+.calendario-dias {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.dia-semana {
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.dia {
+  padding: 10px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &.disponivel:hover {
+    background: #e3f2fd;
+    border-color: #007bff;
+  }
+  
+  &.selecionado {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+}
+
+.form-outline{
+  display:flex;
+  border:1px solid rgb(0, 0, 0);
+ align-items: center;
+ flex-direction: column;
+ width: 80%;
+   margin-top: 2em;
+}
+
+.box-button{
+margin-top: 2em;
+}
+
+.box-voltar{
+position: relative;
+top:10em;
+}

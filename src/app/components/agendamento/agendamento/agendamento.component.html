@@ -1,0 +1,133 @@
+<div class="modal-overlay" *ngIf="showModal" (click)="fecharModal()">
+  <div class="modal-agendamento" (click)="$event.stopPropagation()">
+    
+    <div class="modal-agendamento-left">
+
+      <div class="modal-agendamento-left-mid">
+        <h6>Serviço</h6>
+        <p>Selecione o serviço que deseja agendar um horário.</p>
+      </div>
+
+      <div class="modal-agendamento-left-low">
+        <p>Dúvidas?</p>
+        <a href="/">Fale conosco!</a>
+      </div>
+
+    </div>
+
+    <div class="modal-agendamento-right">
+
+      <!-- Header com título dinâmico -->
+      <div class="modal-agendamento-header">
+        <h4>
+          <span *ngIf="etapaAtual === 'servicos'">Selecione o Serviço</span>
+          <span *ngIf="etapaAtual === 'profissional'">Selecione o Profissional</span>
+          <span *ngIf="etapaAtual === 'data'">Selecione a Data</span>
+          <span *ngIf="etapaAtual === 'horario'">Selecione o Horário</span>
+          <span *ngIf="etapaAtual === 'telefone'">Digite seu telefone</span>
+        </h4>
+        <button class="btn-close" (click)="fecharModal()"></button>
+      </div>
+
+      <!-- Etapa 1: Seleção de Serviços -->
+      <div class="modal-agendamento-mid" *ngIf="etapaAtual === 'servicos'">
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('combo')">
+          <h3>Combo</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('corte')">
+          <h3>Corte</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('barba')">
+          <h3>Barba</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('sobrancelha')">
+          <h3>Sobrancelha</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('limpeza')">
+          <h3>Limpeza de Pele</h3>
+        </button>
+      </div>
+
+      <!-- Etapa 2: Seleção de Profissional -->
+      <div class="modal-agendamento-mid" *ngIf="etapaAtual === 'profissional'">
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('joao')">
+          <h3>Xiru Enzo Gabriel</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('pedro')">
+          <h3>Gabriel de Campos</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('carlos')">
+          <h3>Adryan Jacinto</h3>
+        </button>
+        <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
+      </div>
+
+      <!-- Etapa 3: Seleção de Data -->
+      <div class="modal-agendamento-mid" *ngIf="etapaAtual === 'data'">
+        <div class="calendario">
+          <div class="calendario-header">
+            <button (click)="mesAnterior()">&lt;</button>
+            <span>{{ mesAtual }} {{ anoAtual }}</span>
+            <button (click)="proximoMes()">&gt;</button>
+          </div>
+          
+          <div class="calendario-dias">
+            <div class="dia-semana">Dom</div>
+            <div class="dia-semana">Seg</div>
+            <div class="dia-semana">Ter</div>
+            <div class="dia-semana">Qua</div>
+            <div class="dia-semana">Qui</div>
+            <div class="dia-semana">Sex</div>
+            <div class="dia-semana">Sáb</div>
+            
+            <button 
+              *ngFor="let dia of diasDoMes" 
+              class="dia" 
+              [class.disponivel]="dia > 0"
+              [class.selecionado]="dia === diaSelecionado"
+              (click)="selecionarDia(dia)"
+              [disabled]="dia <= 0">
+              {{ dia > 0 ? dia : '' }}
+            </button>
+          </div>
+        </div>
+        
+        <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
+      </div>
+
+      <!-- Etapa 4: Seleção de Horário -->
+      <div class="modal-agendamento-mid" *ngIf="etapaAtual === 'horario'">
+        <button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('09:00')">
+          <h3>09:00</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('10:00')">
+          <h3>10:00</h3>
+        </button>
+        <button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('11:00')">
+          <h3>11:00</h3>
+        </button>
+        <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
+      </div>
+
+   <!-- Etapa 5: Digitar seu telefone -->
+
+   <div class="modal-agendamento-mid" *ngIf="etapaAtual === 'telefone'">
+
+
+    <div class="form-outline" data-mdb-input-init>
+     <input type="url" id="typeURL" class="form-control" />
+    <label class="form-label" for="typeURL">Digite seu WhatsApp</label>
+     </div>
+
+     <div class = "box-button">
+       <button type="button" class="btn btn-primary" data-mdb-ripple-init  (click)="confirmarAgendamento()" >Agendar</button>
+     </div>
+
+     <div class = "box-voltar">
+  <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
+     </div>
+
+   </div>
+
+</div>
+
