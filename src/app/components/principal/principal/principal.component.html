@@ -1,5 +1,5 @@
 <main class="pagina-principal">
-  <app-navbar ></app-navbar> <!-- Navbar dentro do mesmo container -->
+  <app-navbar ></app-navbar>
 
   <div class="hero-content">
     <h1 class="slogan">
@@ -17,11 +17,7 @@
     </button>
   </div>
 
-      <button type="button" class="btn btn-primary btn-lg" (click)="abrirModal()">Agendar Horário</button>
-   
-
 <app-agendamento 
   [showModal]="showModal" 
   (modalClosed)="fecharModal()">
 </app-agendamento>
-
