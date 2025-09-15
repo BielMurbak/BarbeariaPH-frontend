@@ -1,0 +1,45 @@
+<section class="servicos">
+  <h2 class="titulo-servicos">Serviços</h2>
+
+  <div class="grid-servicos">
+    <!-- Quadrado Corte -->
+    <div class="quadrado-servico">
+      <h3>Corte</h3>
+      <p>
+        Descrição do corte, estilo clássico ou moderno, feito com atenção aos
+        detalhes.
+      </p>
+      <button class="btn-agendar" (click)="abrirModal()"  >Agendar</button>
+    </div>
+
+    <!-- Quadrado Barba -->
+    <div class="quadrado-servico"  >
+      <h3>Barba</h3>
+      <p>Raspar, aparar e modelar a barba com precisão e cuidado.</p>
+      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
+    </div>
+
+    <!-- Quadrado Sobrancelha -->
+    <div class="quadrado-servico" >
+      <h3>Sobrancelha</h3>
+      <p>Design e limpeza da sobrancelha, mantendo o estilo e simetria.</p>
+      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
+    </div>
+
+    <!-- Quadrado Combo -->
+    <div class="quadrado-servico">
+      <h3>Combo</h3>
+      <p>Corte + Barba + Sobrancelha, atendimento completo e personalizado.</p>
+      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
+      
+    </div>
+  </div>
+
+  <!-- Botão maior centralizado -->
+  <div class="agendamento-geral">
+    <button class="btn-agendar btn-geral" (click)="abrirModal()">Agendar Todos os Serviços</button>
+  </div>
+
+  <app-agendamento [showModal]="showModal" (modalClosed)="fecharModal()">
+  </app-agendamento>
+</section>

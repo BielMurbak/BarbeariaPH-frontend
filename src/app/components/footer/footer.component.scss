@@ -1,0 +1,144 @@
+.footer {
+  background-color: rgb(35, 35, 36);
+  padding: 60px 20px;
+  color: #fff;
+}
+
+.container-footer {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.footer-left {
+  display: flex;            /* ativa Flexbox */
+  justify-content: center;  /* centraliza verticalmente dentro da div */
+  gap: 80px;
+}
+
+.footer-left,
+.footer-right {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logo ao lado do nome */
+.logo-nome {
+  padding-left: 80px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.footer-logo {
+  width: 60px;
+  height: auto;
+}
+
+.footer-nome {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.btn-footer {
+  background-color: #BC9E5F;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-footer:hover {
+  background-color: #b8962e;
+}
+
+/* Horários centralizados */
+.footer-right {
+  align-items: center;
+  text-align: center;
+}
+
+.footer-titulo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.horarios {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.7;
+}
+
+.horarios li {
+  margin-bottom: 5px;
+}
+
+.almoco {
+  font-size: 1rem;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+/* Copyright alinhado abaixo */
+.footer-copyright {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container-footer {
+    flex-direction: column-reverse; /* bloco direito em cima, esquerdo embaixo */
+    align-items: center;
+    gap: 40px;
+  }
+
+  .logo-nome {
+    justify-content: center;
+    margin-right: 0; /* remove margem extra */
+  }
+
+  .footer-left,
+  .footer-right {
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-nome {
+    font-size: 1.5rem;
+  }
+
+  .footer-titulo {
+    font-size: 1.3rem;
+  }
+
+  .footer-logo {
+    width: 80px; /* mantém visível mas menor que no desktop */
+  }
+
+  .horarios {
+    font-size: 1.1rem;
+  }
+
+  .almoco {
+    font-size: 0.95rem;
+  }
+
+  .logo-nome {
+  padding-left: 0px;
+  
+}
+}

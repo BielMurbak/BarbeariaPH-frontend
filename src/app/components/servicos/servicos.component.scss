@@ -1,0 +1,107 @@
+.servicos {
+  background-color: rgb(233, 229, 219); /* mesmo tom da seção sobre nós */
+  padding: 50px 20px;
+  text-align: center;
+}
+
+
+
+.titulo-servicos {
+  font-size: 2.5rem;
+  margin-bottom: 60px;
+  color: #000;
+}
+
+.grid-servicos {
+  display: flex;
+  gap: 100px;
+  justify-content: center;
+  flex-wrap: wrap; /* permite quebrar em linha quando for mobile */
+}
+
+.quadrado-servico {
+  background-color: #fff;
+  flex: 1 1 200px; /* ocupa espaço mínimo de 200px, cresce conforme necessário */
+  max-width: 350px;
+  height: 300px;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 50px;
+
+}
+
+.quadrado-servico h3 {
+  font-size: 1.7rem;
+  color: #000;
+}
+
+.quadrado-servico p {
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.servico-card .btn-agendar {
+  font-size: 2rem;   /* texto menor */
+  padding: 8px 14px;   /* menos espaço interno */
+}
+
+.quadrado-servico .btn-agendar {
+  margin-top: auto; /* empurra o botão para baixo */
+}
+
+/* Botão maior centralizado */
+.agendamento-geral {
+  margin-top: 40px;
+}
+
+
+.agendamento-geral .btn-geral {
+  padding: 15px 30px;
+  font-size: 1.3rem;
+}
+
+/* botões de serviço */
+.btn-agendar {
+  font-size: 1rem;          /* tamanho do texto */
+  padding: 12px 20px;       /* tamanho do botão */
+  background-color: #BC9E5F; /* cor de fundo dourada */
+  color: #fff;              /* cor do texto */
+  border-radius: 6px;       /* cantos arredondados */
+  text-decoration: none;    
+  font-weight: bold;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: 0.3s;         /* animação suave ao passar o mouse */
+  display: inline-block;
+}
+
+.btn-agendar:hover {
+  background-color: #b8962e; /* cor de fundo ao passar o mouse */
+  color: #fff;
+  box-shadow: none;
+}
+
+.btn-agendar:focus,
+.btn-agendar:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .grid-servicos {
+    flex-direction: column; /* um embaixo do outro */
+    align-items: center;
+    gap: 0px;
+  }
+
+  .quadrado-servico {
+    max-width: 90%;
+  }
+}

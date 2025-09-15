@@ -1,0 +1,104 @@
+.contatos {
+  background-color: #E9E5DB;
+  padding: 60px 20px;
+}
+
+.container-contatos {
+  display: flex;
+  justify-content: center; /* centraliza os dois blocos */
+  gap: 80px; /* espaço maior entre os blocos */
+  max-width: 1300px; /* largura máxima do container */
+  margin: 0 auto; /* centraliza na página */
+}
+
+.bloco-localizacao,
+.bloco-contatos {
+  flex: 1;
+  max-width: 650px; /* largura maior para cada bloco */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centraliza conteúdo dentro da div */
+  gap: 50px; /* espaçamento interno entre elementos */
+}
+
+.bloco-localizacao h3,
+.bloco-contatos h3 {
+  font-size: 2.8rem; /* títulos maiores */
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.bloco-localizacao iframe {
+  width: 100%; /* ocupa toda a largura do bloco */
+  height: 450px; /* aumenta altura do mapa */
+  border: 0;
+  border-radius: 8px;
+}
+
+.bloco-localizacao p,
+.bloco-contatos p {
+  font-size: 2rem; /* textos maiores */
+  line-height: 2;    /* espaçamento maior entre linhas */
+  text-align: center; /* centraliza os textos */
+}
+
+.bloco-localizacao a,
+.bloco-contatos a {
+  color: #BC9E5F;
+  font-size: 2rem; /* links maiores e mais visíveis */
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-contato {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* espaço entre ícone e texto */
+  color: #BC9E5F;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link-contato:hover {
+  text-decoration: underline;
+}
+
+.icone-contato {
+  width: 50px; /* tamanho do ícone */
+  height: 50px;
+}
+
+.bloco-localizacao a:hover,
+.bloco-contatos a:hover {
+  text-decoration: underline;
+}
+
+/* Responsividade para tablets e celulares */
+@media (max-width: 768px) {
+  .container-contatos {
+    flex-direction: column; 
+    align-items: center;
+    gap: 40px; /* mantém espaçamento entre os blocos */
+  }
+
+  .bloco-localizacao,
+  .bloco-contatos {
+    max-width: 95%; /* ocupa quase toda a largura */
+  }
+
+  .bloco-localizacao iframe {
+    height: 400px; /* mapa um pouco menor no mobile */
+  }
+
+  .bloco-localizacao h3,
+  .bloco-contatos h3 {
+    font-size: 2.2rem; /* títulos menores no mobile */
+  }
+
+  .bloco-localizacao p,
+  .bloco-contatos p,
+  .bloco-localizacao a,
+  .bloco-contatos a {
+    font-size: 1.4rem; /* mantém visibilidade no mobile */
+  }
+}
