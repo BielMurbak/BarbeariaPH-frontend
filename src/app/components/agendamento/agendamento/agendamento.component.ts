@@ -18,22 +18,19 @@ profissionalSelecionado: string = '';         // Armazena o profissional escolhi
 dataSelecionada: string = '';                 // Armazena a data escolhida
 telefoneAdicionar: string = "";               // Armazena o telefone digitado
 
-// ===== VARIÁVEIS DE CONTROLE DE SUBMENUS =====
-// Estas variáveis controlam quando mostrar telas secundárias dentro da etapa 'servicos'
-mostrarCombos: boolean = false;               // Mostra opções de combo quando true
-mostrarTipoCorte: boolean = false;            // Mostra tipos de corte quando true
-mostrarServicosAdicionais: boolean = false;   // Mostra serviços extras quando true
-servicosAdicionaisSelecionados: string[] = []; // Array para múltiplas seleções de serviços extras
+mostrarCombos: boolean = false;              
+mostrarTipoCorte: boolean = false;          
+mostrarServicosAdicionais: boolean = false;  
+servicosAdicionaisSelecionados: string[] = []; 
 
-// ===== VARIÁVEIS DO CALENDÁRIO =====
-dataAtual = new Date();                       // Data atual do sistema
-mesAtual = this.dataAtual.toLocaleString('pt-BR', { month: 'long' }); // Nome do mês em português
-anoAtual = this.dataAtual.getFullYear();      // Ano atual
-diaSelecionado: number = 0;                   // Dia selecionado pelo usuário
-diasDoMes: number[] = [];                     // Array com todos os dias do mês para exibição
 
-// ===== CONFIGURAÇÃO DE TEXTOS DINÂMICOS =====
-// Lista que mapeia cada etapa com seu título e descrição correspondente
+dataAtual = new Date();                    
+mesAtual = this.dataAtual.toLocaleString('pt-BR', { month: 'long' }); 
+anoAtual = this.dataAtual.getFullYear();     
+diaSelecionado: number = 0;                 
+diasDoMes: number[] = [];                    
+
+
 lista = [
   { etapa: "mostrarServicosAdicionas", titulo: "Serviço", texto: "Selecione o serviço que deseja agendar um horário." },
   { etapa: "profissional", titulo: "Profissional", texto: "Escolha o profissional." },
@@ -41,30 +38,44 @@ lista = [
   { etapa: "telefone", titulo: "Telefone", texto: "Digite seu telefone." }
 ];
 
-// ===== MÉTODOS DE NAVEGAÇÃO =====
+
 
 fecharModal() {
-  // Reseta o sistema para o estado inicial
+
   this.etapaAtual = 'servicos';
+  this.mostrarCombos = false;
+  this.mostrarTipoCorte = false;
+  this.mostrarServicosAdicionais = false;
+  this.servicosAdicionaisSelecionados = [];
+  this.servicoSelecionado = '';
+  this.profissionalSelecionado = '';
+  this.dataSelecionada = '';
+  this.telefoneAdicionar = '';
   this.modalClosed.emit();
 }
 
 selecionarServico(servico: string) {
-  // CONTROLADOR PRINCIPAL: decide qual caminho seguir baseado no serviço escolhido
+  
   this.servicoSelecionado = servico;
+  
+
+  this.mostrarCombos = false;
+  this.mostrarTipoCorte = false;
+  this.mostrarServicosAdicionais = false;
+  
   if(servico === "combo"){
-    this.mostrarCombos = true;              // Ativa submenu de combos
+    this.mostrarCombos = true;              
   } else if(servico === "corte"){
-    this.mostrarTipoCorte = true;           // Ativa submenu de tipos de corte
-
-  }else{
-    alert("Fazer o resumo e fazer barba,sobrancelha");
+    this.mostrarTipoCorte = true;          
+  } else if(servico === "barba"){
+    this.mostrarServicosAdicionais = true;  
+  } else {
+    this.mostrarServicosAdicionais = true;
   }
-   
-  }
+}
 
-// ===== MÉTODOS DE SELEÇÃO ESPECÍFICA =====
-// Todos seguem o mesmo padrão: salvar escolha + desativar submenu + avançar etapa
+
+
 
 selecionarCombo(combo: string) {
   this.servicoSelecionado = combo;
@@ -75,10 +86,9 @@ selecionarCombo(combo: string) {
 selecionarCorte(corte: string) {
   this.servicoSelecionado = corte;
   this.mostrarTipoCorte = false;            // Desativa submenu
-  this.etapaAtual = 'mostrarServicosAdicionas'; // Vai para serviços adicionais
+  this.mostrarServicosAdicionais = true;    // Ativa tela de serviços adicionais
 }
 
-// ===== SISTEMA DE MÚLTIPLA SELEÇÃO (Serviços Adicionais) =====
 selecionarServicosAdicionais(servico: string) {
   // Permite selecionar/desselecionar múltiplos serviços extras
   const index = this.servicosAdicionaisSelecionados.indexOf(servico);
@@ -96,8 +106,7 @@ continuarServicosAdicionais() {
   this.etapaAtual = 'profissional';
 }
 
-// ===== FLUXO LINEAR SIMPLES =====
-// Métodos que apenas avançam para próxima etapa
+
 selecionarProfissional(profissional: string) {
   this.profissionalSelecionado = profissional;
   this.etapaAtual = 'data';
@@ -113,16 +122,26 @@ adicionarTelefone(telefone: string) {
   this.etapaAtual = "telefone";
 }
 
-// ===== NAVEGAÇÃO REVERSA =====
+
 voltarEtapa() {
   // Sistema de volta: cada etapa sabe para onde voltar
-  if (this.etapaAtual === 'profissional') this.etapaAtual = 'servicos';
+  if (this.etapaAtual === 'profissional') {
+    this.etapaAtual = 'servicos';
+    // Reseta todos os submenus ao voltar para serviços
+    this.mostrarCombos = false;
+    this.mostrarTipoCorte = false;
+    this.mostrarServicosAdicionais = false;
+  }
+  else if (this.etapaAtual === 'mostrarServicosAdicionas') {
+    this.etapaAtual = 'profissional';
+    this.mostrarServicosAdicionais = false;
+  }
   else if (this.etapaAtual === 'data') this.etapaAtual = 'profissional';
   else if (this.etapaAtual === 'horario') this.etapaAtual = 'data';
   else if(this.etapaAtual === 'telefone') this.etapaAtual = 'horario';
 }
 
-// ===== FINALIZAÇÃO =====
+
 confirmarAgendamento() {
   // Mostra confirmação e fecha modal
   Swal.fire({
@@ -162,6 +181,18 @@ gerarCalendario() {
 
 // ===== NAVEGAÇÃO DO CALENDÁRIO =====
 mesAnterior() {
+  const hoje = new Date();
+  const mesAtualSistema = hoje.toLocaleString('pt-BR', { month: 'long' });
+  
+  if(this.mesAtual === mesAtualSistema){
+    Swal.fire({
+      title: 'Erro! nao pode marcar agendamento mes passado',
+      icon: "error",
+      confirmButtonText: 'Fechar'
+    });
+    return;
+  }
+  
   this.dataAtual.setMonth(this.dataAtual.getMonth() - 1);
   this.atualizarCalendario();
 }
@@ -181,6 +212,19 @@ atualizarCalendario() {
 selecionarDia(dia: number) {
   // Só permite selecionar dias válidos (> 0)
   if (dia > 0) {
+    const hoje = new Date();
+    const diaAtualSistema = hoje.getDate();
+    
+    // Verifica se está tentando selecionar dia passado no mês atual
+    if(dia < diaAtualSistema){
+      Swal.fire({
+        title: 'Erro! nao pode marcar agendamento dia passado',
+        icon: "error",
+        confirmButtonText: 'Fechar'
+      });
+      return;
+    }
+    
     this.diaSelecionado = dia;
     this.dataSelecionada = `${dia}/${this.dataAtual.getMonth() + 1}/${this.anoAtual}`;
     this.etapaAtual = 'horario'; 
