@@ -6,10 +6,7 @@
     <button
       class="navbar-toggler"
       type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
+      (click)="toggleMenu()"
       aria-label="Toggle navigation"
     >
       <i class="fas fa-bars"></i>
@@ -17,6 +14,7 @@
 
     <div
       class="collapse navbar-collapse justify-content-end"
+      [class.show]="menuAberto"
       id="navbarNavAltMarkup"
     >
       <div class="navbar-nav">

@@ -1,14 +1,14 @@
-
 //pagina principal
 .pagina-principal {
   position: relative;
-  min-height: 100vh; 
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-image: url("/assets/fundo.png");
   background-size: cover;   
   background-repeat: no-repeat;
   background-position: center; 
-    background-attachment: fixed; /* faz o fundo ficar fixo */
-
+  background-attachment: fixed; /* faz o fundo ficar fixo */
 }
 
 .pagina-principal::before {
@@ -26,6 +26,7 @@
 }
 
 .btn-agendar {
+  max-width: 30%;
   font-size: 1.4rem; 
   padding: 20px 20px;
   background-color: #BC9E5F;
@@ -52,12 +53,10 @@
 }
 
 .hero-content {
-  position: absolute;
-  top: 350PX;       
-  left: 50px;     
-  transform: translateY(-10%); 
-  max-width: 25%;
-
+  margin-left: 50px;
+  margin-top: auto;
+  margin-bottom: auto;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -80,18 +79,15 @@
 
 
 @media (max-width: 768px) {
-
-  
-
   .hero-content {
-    left: 20px;
-    bottom: 30px;
+    margin-left: 20px;
     max-width: 90%;
   }
+  .btn-agendar {
+    max-width: 50%;
 
+  }
 }
-
-
 
 
 

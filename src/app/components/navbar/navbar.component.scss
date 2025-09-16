@@ -41,6 +41,27 @@
   background-color: #b8962e;
 }
 
+@media (max-width: 991px) {
+  .navbar-collapse.show .navbar-nav {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .navbar-collapse.show .nav-link {
+    text-align: center;
+    display: block;
+    width: 100%;
+  }
+  
+  .navbar-collapse.show .btn-conta {
+    text-align: center;
+    display: inline-block;
+    width: auto;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar-logo {
     width: 15%;  /* aumenta um pouco no tablet/mobile */
