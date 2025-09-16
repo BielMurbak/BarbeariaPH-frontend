@@ -1,8 +1,4 @@
 
-
-
-
-
 @if (showModal) {
 
 <div class="modal-overlay" (click)="fecharModal()">
@@ -16,7 +12,7 @@
 então quando etapaAtual (uma função que guarda qual página a tela da direita se encontra) 
 ele muda dinamicamente para parágrafo mais adequado -->
 
-@if (etapaAtual === 'mostrarServicosAdicionas') {
+@if (etapaAtual === 'mostrarServicosAdicionas' || mostrarServicosAdicionais) {
 <h6>Serviços Adicionais</h6>
 <p>Selecione serviços adicionais caso queira incluir no agendamento</p>
 }
@@ -38,7 +34,7 @@ ele muda dinamicamente para parágrafo mais adequado -->
 </p>
 }
 
-@if(etapaAtual==="servicos"){
+@if(etapaAtual==="servicos" && !mostrarServicosAdicionais){
 <h6>Serviço</h6>
 <p>Selecione o serviço que deseja agendar um horário.</p>
 }
@@ -67,7 +63,7 @@ ele muda dinamicamente para parágrafo mais adequado -->
 <!-- Títulos dinâmicos do header - mudam conforme a etapa atual e submenus ativos -->
 <!-- Controla qual título aparece baseado em etapaAtual e variáveis de submenu -->
 
-@if (etapaAtual === 'servicos' && !mostrarCombos && !mostrarTipoCorte) {
+@if (etapaAtual === 'servicos' && !mostrarCombos && !mostrarTipoCorte && !mostrarServicosAdicionais) {
 <span>Selecione o Serviço</span>
 }
 @if (mostrarCombos) {
@@ -110,7 +106,7 @@ ele muda dinamicamente para parágrafo mais adequado -->
      Filtro inteligente: mostra apenas se estiver em 'servicos' E não estiver 
      mostrando combos OU tipos de corte (evita sobreposição de telas) -->
 
-@if (etapaAtual === 'servicos' && !mostrarCombos && !mostrarTipoCorte) {
+@if (etapaAtual === 'servicos' && !mostrarCombos && !mostrarTipoCorte && !mostrarServicosAdicionais) {
 <div class="modal-agendamento-mid">
 <button type="button" class="modal-agendamento-servicos-container" (click)="selecionarServico('combo')">
 <h3>Combo</h3>
@@ -161,18 +157,23 @@ ele muda dinamicamente para parágrafo mais adequado -->
 </div>
 }
 
-@if (etapaAtual==="mostrarServicosAdicionas") {   
+@if (mostrarServicosAdicionais) {
+
 <div class="modal-agendamento-mid">
-<label class="modal-agendamento-servicos-container">       
+
+@if (servicoSelecionado !== 'barba') {
+<label class="modal-agendamento-servicos-container">      
 <input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Barba')" (change)="selecionarServicosAdicionais('Barba')" />
 <h3>Barba R$ 35,00</h3>
 </label>
+}
 
+@if (servicoSelecionado !== 'sobrancelha'){
 <label class="modal-agendamento-servicos-container">       
 <input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Sobracelha')" (change)="selecionarServicosAdicionais('Sobracelha')" />
 <h3>Sobracelha R$ 10,00</h3>
 </label>
-
+}
 <button type="button" class="btn-continuar" (click)="continuarServicosAdicionais()"> Continuar</button>
 
 <button type="button" class="btn-voltar" (click)="mostrarServicosAdicionais = false">Voltar</button>
@@ -199,9 +200,9 @@ ele muda dinamicamente para parágrafo mais adequado -->
 <div class="modal-agendamento-mid">
 <div class="calendario">
 <div class="calendario-header">
-<button (click)="mesAnterior()">&lt;</button>
+<button (click)="mesAnterior()"><</button>
  <span>{{ mesAtual }} {{ anoAtual }}</span>
-
+<button (click)="proximoMes()">></button>
 </div>
               
 <div class="calendario-dias">
