@@ -2,10 +2,9 @@
   background-color: rgb(233, 229, 219);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   padding: 50px;
   position: relative;
-  
 }
 
 .sobre-bloco {
@@ -15,14 +14,15 @@
   align-items: center;
   text-align: center;
   position: relative;
+  min-height: 100%;
 }
 
 /* Linhas decorativas entre blocos (desktop) */
 .sobre-bloco:not(:last-child)::after {
   content: "";
   position: absolute;
-  top: 1%;       /* não encosta no topo */
-  bottom: 1%;    /* não encosta no fundo */
+  top: 0;
+  bottom: 0;
   right: 0;
   width: 2px;
   background-color: #000;
@@ -94,7 +94,7 @@
 
 .centro p {
   font-size: 1.5rem;
-  line-height: 1.5;
+  line-height: 1.2;
   margin-top: 30px;
   padding: 0 15%;       /* afasta o texto das bordas laterais */
   text-align: justify;
@@ -117,7 +117,38 @@
 .instagram-embed iframe {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 8px; 
+}
+
+@media (max-width: 1500px) and (min-width: 1024px) {
+  .centro p {
+    font-size: 1.2rem;   /* levemente menor */
+    line-height: 1.4;    /* dá mais respiro */
+    padding: 0 8%;       /* menos margem lateral → não empurra tanto */
+    margin-top: 20px;    /* sobe um pouco */
+  }
+}
+
+@media (max-width: 1400px) {
+  .sobre-nos {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sobre-bloco {
+    margin-bottom: 40px;
+
+    &::after { display: none; }
+
+    /* permite que o Instagram ocupe mais largura */
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .instagram-embed {
+    width: 80%;
+    height: 75vh;
+  }
 }
 
 @media (max-width: 768px) {
@@ -149,27 +180,56 @@
 
   .instagram-embed {
     grid-template-columns: repeat(2, 150px);
-    width: 130%;
-    height: 35vh;
+    width: 80%;
+    height: 75vh;
     gap: 10px;
   }
 
   .foto-barbeiro { max-width: 250px; }
 }
 
+ @media (max-width: 480px) {
 
-
-@media (max-width: 480px) {
-  .slogan { font-size: 2rem; }
-  .sub-slogan { font-size: 1.4rem; }
-  .hero-content .btn { font-size: 0.9rem; padding: 0.6rem 1.2rem; }
-
-  .instagram-embed {
-    grid-template-columns: repeat(2, 120px);
-    height: 25vh;
-    gap: 8px;
+  .centro p {
+    font-size: 1rem;   
+    line-height: 1.3;    
+    padding: 0 1%;      
+    margin-top: 20px;    
+    margin-bottom: 50px;    
   }
 
   .foto-barbeiro { max-width: 220px; }
+
+  .instagram-embed {
+    width: 100%;         /* ocupa 100% da tela no mobile */
+    max-width: 100%;
+    height: auto;        /* sem altura fixa */
+    display: block;      /* remove o flex que centralizava */
+  }
+
+  .instagram-embed iframe {
+    width: 100%;         /* ocupa toda a largura */
+    height: auto;        
+    min-height: 500px;   /* dá espaço pro post inteiro aparecer */
+  }
+
 }
- 
+@media (max-width: 410px) {
+  .instagram-embed {
+    width: 100%;        /* ocupa toda a largura */
+    max-width: 100%;
+    height: auto;       
+    overflow: hidden;   /* esconde qualquer coisa que "vaze" */
+    position: relative;
+    padding-top: 130%;  /* define proporção (ajusta se quiser mais alto ou mais baixo) */
+  }
+
+  .instagram-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;       /* faz o iframe escalar sem zoom */
+    min-height: unset;  /* remove limite que estava forçando altura */
+  }
+}

@@ -73,3 +73,16 @@
     width: 20%; /* aumenta mais no celular */
   }
 }
+
+@media (max-width: 480px) {
+  .navbar-logo {
+    width: 15%;
+    height: auto;
+  }
+
+  .navbar-brand {
+    color: #fff;
+    font-weight: bold;
+    font-size: 15px;
+  }
+}
