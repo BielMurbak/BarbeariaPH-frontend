@@ -16,11 +16,14 @@ etapaAtual: string = 'servicos';              // Controla qual tela principal es
 servicoSelecionado: string = '';              // Armazena o serviço escolhido pelo usuário
 profissionalSelecionado: string = '';         // Armazena o profissional escolhido
 dataSelecionada: string = '';                 // Armazena a data escolhida
+horarioSelecionado: string = '';              // Armazena o horário selecionado
 telefoneAdicionar: string = "";               // Armazena o telefone digitado
 
 mostrarCombos: boolean = false;              
 mostrarTipoCorte: boolean = false;          
 mostrarServicosAdicionais: boolean = false;  
+resumo : boolean = false;
+
 servicosAdicionaisSelecionados: string[] = []; 
 
 
@@ -46,10 +49,12 @@ fecharModal() {
   this.mostrarCombos = false;
   this.mostrarTipoCorte = false;
   this.mostrarServicosAdicionais = false;
+  this.resumo = false;
   this.servicosAdicionaisSelecionados = [];
   this.servicoSelecionado = '';
   this.profissionalSelecionado = '';
   this.dataSelecionada = '';
+  this.horarioSelecionado = '';
   this.telefoneAdicionar = '';
   this.modalClosed.emit();
 }
@@ -58,18 +63,22 @@ selecionarServico(servico: string) {
   
   this.servicoSelecionado = servico;
   
-
+     
   this.mostrarCombos = false;
   this.mostrarTipoCorte = false;
   this.mostrarServicosAdicionais = false;
   
   if(servico === "combo"){
-    this.mostrarCombos = true;              
+    this.mostrarCombos = true;           
   } else if(servico === "corte"){
     this.mostrarTipoCorte = true;          
   } else if(servico === "barba"){
+    this.servicoSelecionado = "Barba";
+    this.resumo = true;
     this.mostrarServicosAdicionais = true;  
   } else {
+    this.servicoSelecionado = "Sobrancelha";
+    this.resumo = true;
     this.mostrarServicosAdicionais = true;
   }
 }
@@ -80,12 +89,14 @@ selecionarServico(servico: string) {
 selecionarCombo(combo: string) {
   this.servicoSelecionado = combo;
   this.mostrarCombos = false;               // Desativa submenu
+  this.resumo = true;                       // Ativa resumo
   this.etapaAtual = 'profissional';         // Avança para próxima etapa
 }
 
 selecionarCorte(corte: string) {
   this.servicoSelecionado = corte;
   this.mostrarTipoCorte = false;            // Desativa submenu
+  this.resumo = true;                       // Ativa resumo
   this.mostrarServicosAdicionais = true;    // Ativa tela de serviços adicionais
 }
 
@@ -101,8 +112,8 @@ selecionarServicosAdicionais(servico: string) {
 
 continuarServicosAdicionais() {
   // Finaliza seleção múltipla e continua fluxo
-  this.servicoSelecionado = this.servicosAdicionaisSelecionados.join(', ');
   this.mostrarServicosAdicionais = false;
+  this.resumo = true;                       // Ativa resumo
   this.etapaAtual = 'profissional';
 }
 
@@ -117,8 +128,8 @@ selecionarData(data: string) {
   this.etapaAtual = 'horario';
 }
 
-adicionarTelefone(telefone: string) {
-  this.telefoneAdicionar = telefone;
+adicionarTelefone(horario: string) {
+  this.horarioSelecionado = horario;
   this.etapaAtual = "telefone";
 }
 
@@ -186,7 +197,7 @@ mesAnterior() {
   
   if(this.mesAtual === mesAtualSistema){
     Swal.fire({
-      title: 'Erro! nao pode marcar agendamento mes passado',
+      title: 'Não é possível agendar mês anterior. Escolha hoje ou uma  mês  futura.',
       icon: "error",
       confirmButtonText: 'Fechar'
     });
@@ -202,6 +213,8 @@ proximoMes() {
   this.atualizarCalendario();
 }
 
+
+
 atualizarCalendario() {
   // Atualiza nome do mês e ano, depois regenera grid de dias
   this.mesAtual = this.dataAtual.toLocaleString('pt-BR', { month: 'long' });
@@ -210,15 +223,26 @@ atualizarCalendario() {
 }
 
 selecionarDia(dia: number) {
-  // Só permite selecionar dias válidos (> 0)
   if (dia > 0) {
     const hoje = new Date();
     const diaAtualSistema = hoje.getDate();
+    const dataSelecionada = new Date(this.anoAtual, this.dataAtual.getMonth(), dia);
+    const diaSemana = dataSelecionada.getDay();
     
     // Verifica se está tentando selecionar dia passado no mês atual
-    if(dia < diaAtualSistema){
+    if(dia < diaAtualSistema && this.dataAtual.getMonth() === hoje.getMonth()){
       Swal.fire({
-        title: 'Erro! nao pode marcar agendamento dia passado',
+        title: 'Não é possível agendar em dia anterior. Escolha hoje ou uma data futura.',
+        icon: "error",
+        confirmButtonText: 'Fechar'
+      });
+      return;
+    }
+    
+    // Verifica se é domingo (0 = domingo)
+    if(diaSemana === 0){
+      Swal.fire({
+        title: 'Não funcionamos aos domingos. Escolha outro dia.',
         icon: "error",
         confirmButtonText: 'Fechar'
       });
@@ -229,6 +253,34 @@ selecionarDia(dia: number) {
     this.dataSelecionada = `${dia}/${this.dataAtual.getMonth() + 1}/${this.anoAtual}`;
     this.etapaAtual = 'horario'; 
   }
+}
+
+isDomingo(dia: number): boolean {
+  if (dia <= 0) return false;
+  const data = new Date(this.anoAtual, this.dataAtual.getMonth(), dia);
+  return data.getDay() === 0;
+}
+
+calcularTotal(): string {
+  let total = 0;
+  
+  // Preços dos serviços principais
+  if (this.servicoSelecionado.includes('Cabelo e barba')) total += 60;
+  else if (this.servicoSelecionado.includes('Degrade e sobrancelha')) total += 45;
+  else if (this.servicoSelecionado.includes('Social e sobrancelha')) total += 40;
+  else if (this.servicoSelecionado.includes('Cabelo Social')) total += 35;
+  else if (this.servicoSelecionado.includes('Cabelo')) total += 40;
+  else if (this.servicoSelecionado.includes('Acabamento no Cabelo')) total += 20;
+    else if (this.servicoSelecionado.includes('Barba')) total += 35;
+       else if (this.servicoSelecionado.includes('Sobrancelha')) total += 10;
+  
+  // Preços dos serviços adicionais
+  this.servicosAdicionaisSelecionados.forEach(servico => {
+    if (servico === 'Barba') total += 35;
+    if (servico === 'Sobracelha') total += 10;
+  });
+  
+  return total.toFixed(2);
 }
 
 }
