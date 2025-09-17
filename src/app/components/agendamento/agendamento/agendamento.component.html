@@ -161,14 +161,14 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
 <div class="modal-agendamento-mid">
 
-@if (servicoSelecionado !== 'barba') {
+@if (servicoSelecionado !== 'Barba') {
 <label class="modal-agendamento-servicos-container">      
 <input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Barba')" (change)="selecionarServicosAdicionais('Barba')" />
 <h3>Barba R$ 35,00</h3>
 </label>
 }
 
-@if (servicoSelecionado !== 'sobrancelha'){
+@if (servicoSelecionado !== 'Sobrancelha'){
 <label class="modal-agendamento-servicos-container">       
 <input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Sobracelha')" (change)="selecionarServicosAdicionais('Sobracelha')" />
 <h3>Sobracelha R$ 10,00</h3>
@@ -183,13 +183,13 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
  @if (etapaAtual === 'profissional') {
 <div class="modal-agendamento-mid">
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('joao')">
+<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Xiru Enzo Gabriel')">
 <h3>Xiru Enzo Gabriel</h3>
 </button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('pedro')">
+<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Gabriel de Campos')">
 <h3>Gabriel de Campos</h3>
 </button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('carlos')">
+<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Adryan Jacinto')">
 <h3>Adryan Jacinto</h3>
 </button>
 <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
@@ -214,8 +214,16 @@ ele muda dinamicamente para parágrafo mais adequado -->
 <div class="dia-semana">Sex</div>
 <div class="dia-semana">Sáb</div>
                 
-@for (dia of diasDoMes; track dia) {
-<button class="dia" [class.disponivel]="dia > 0" [class.selecionado]="dia === diaSelecionado" (click)="selecionarDia(dia)" [disabled]="dia <= 0">{{ dia > 0 ? dia : '' }}</button>
+@for (dia of diasDoMes; track dia; let i = $index) {
+@if (dia <= 0 || !isDomingo(dia)) {
+<button class="dia" 
+        [class.disponivel]="dia > 0" 
+        [class.selecionado]="dia === diaSelecionado" 
+        (click)="selecionarDia(dia)" 
+        [disabled]="dia <= 0">{{ dia > 0 ? dia : '' }}</button>
+} @else {
+<div class="dia"></div>
+}
 }
 
 </div>
@@ -259,6 +267,49 @@ ele muda dinamicamente para parágrafo mais adequado -->
 }
 
 </div>
+
+@if(resumo){
+     
+<div class="container-do-resumo">
+<div class="resumo-header">
+<h3>RESUMO</h3>
+</div>
+<div class="resumo-content">
+<div class="resumo-item">
+<span class="resumo-label">SERVIÇO</span>
+<span class="resumo-value">{{servicoSelecionado}}</span>
+</div>
+@if(servicosAdicionaisSelecionados.length > 0) {
+<div class="resumo-item">
+<span class="resumo-label">ADICIONAIS</span>
+<span class="resumo-value">{{servicosAdicionaisSelecionados.join(', ')}}</span>
+</div>
+}
+@if(profissionalSelecionado) {
+<div class="resumo-item">
+<span class="resumo-label">PROFISSIONAL</span>
+<span class="resumo-value">{{profissionalSelecionado}}</span>
+</div>
+}
+@if(dataSelecionada) {
+<div class="resumo-item">
+<span class="resumo-label">DATA</span>
+<span class="resumo-value">{{dataSelecionada}}</span>
+</div>
+}
+@if(horarioSelecionado) {
+<div class="resumo-item">
+<span class="resumo-label">HORÁRIO</span>
+<span class="resumo-value">{{horarioSelecionado}}</span>
+</div>
+}
+<div class="resumo-total">
+<span class="resumo-label">TOTAL</span>
+<span class="resumo-value">R$ {{calcularTotal()}}</span>
+</div>
+</div>
+</div>
+}
 </div>
 </div>
 
