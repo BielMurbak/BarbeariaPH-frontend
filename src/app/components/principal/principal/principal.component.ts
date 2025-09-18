@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AgendamentoComponent } from '../../agendamento/agendamento/agendamento.component';
+import { AgendamentoComponent } from '../../agendamento/agendamento/agendamento-form.component';
 import { NavbarComponent } from '../../navbar/navbar.component';
 
 @Component({

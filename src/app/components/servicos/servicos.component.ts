@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AgendamentoComponent } from '../agendamento/agendamento/agendamento.component';
+import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-form.component';
 
 @Component({
   selector: 'app-servicos',

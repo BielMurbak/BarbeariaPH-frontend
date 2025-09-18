@@ -251,12 +251,12 @@ ele muda dinamicamente para parágrafo mais adequado -->
 @if (etapaAtual === 'telefone') {
 <div class="modal-agendamento-mid">
 <div class="form-outline" data-mdb-input-init>
-<input type="url" id="typeURL" class="form-control" />
+<input type="tel" id="typeURL" class="form-control" [(ngModel)]="telefoneAdicionar" />
 <label class="form-label" for="typeURL">Digite seu WhatsApp</label>
 </div>
 
 <div class="box-button">
-<button type="button" class="btn btn-primary" data-mdb-ripple-init (click)="confirmarAgendamento()" >Agendar</button>
+<button type="button" class="btn btn-primary" data-mdb-ripple-init (click)="finalizarAgendamento()">Agendar</button>
 </div>
 
 <div class="box-voltar">
