@@ -215,21 +215,26 @@
 
 }
 @media (max-width: 410px) {
+  .sobre-bloco.direito {
+    padding: 0 15px;
+  }
+
   .instagram-embed {
-    width: 100%;        /* ocupa toda a largura */
-    max-width: 100%;
-    height: auto;       
-    overflow: hidden;   /* esconde qualquer coisa que "vaze" */
-    position: relative;
-    padding-top: 130%;  /* define proporção (ajusta se quiser mais alto ou mais baixo) */
+    width: 95%;
+    max-width: 350px;
+    height: 400px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .instagram-embed iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;       /* faz o iframe escalar sem zoom */
-    min-height: unset;  /* remove limite que estava forçando altura */
+    height: 100%;
+    border: none;
+    min-height: unset;
   }
 }
