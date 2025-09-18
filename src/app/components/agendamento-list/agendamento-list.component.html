@@ -1,0 +1,66 @@
+<nav class="navbar navbar-expand-lg custom-navbar">
+  <div class="container-fluid">
+    <img src="assets/logo.png" alt="Logo" class="navbar-logo" />
+    <a class="navbar-brand" href="#">PH Barbearia Classica</a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      (click)="toggleMenu()"
+      aria-label="Toggle navigation"
+    >
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <div
+      class="collapse navbar-collapse justify-content-end"
+      [class.show]="menuAberto"
+      id="navbarNavAltMarkup"
+    >
+      <div class="navbar-nav">
+        <a class="nav-link" href="#">Agendamentos</a>
+        <a class="nav-link" href="#">Históricos</a>
+        <a class="nav-link" href="#">Meus Dados</a>
+        <a class="btn-conta" routerLink="/">Sair</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="agendamento-container">
+  <div class="container">
+    <h2 class="text-center mb-4">Lista de Agendamentos</h2>
+    
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">Cliente</th>
+            <th scope="col">Serviço</th>
+            <th scope="col">Valor</th>
+            <th scope="col">Barbeiro</th>
+            <th scope="col">Data/Hora</th>
+            <th scope="col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let agendamento of agendamentos">
+            <td>{{ agendamento.cliente }}</td>
+            <td>{{ agendamento.servico }}</td>
+            <td>{{ agendamento.valor }}</td>
+            <td>{{ agendamento.barbeiro }}</td>
+            <td>{{ agendamento.dataHora }}</td>
+            <td>
+              <div class="actions-column">
+                <button class="btn btn-edit" (click)="editar(agendamento.id)">Editar</button>
+                <button class="btn btn-delete" (click)="excluir(agendamento.id)">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>

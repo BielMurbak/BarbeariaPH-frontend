@@ -1,0 +1,191 @@
+.custom-navbar {
+  background-color: rgb(35, 35, 36);
+  padding: 20px 20px;
+}
+
+.navbar-logo {
+  height: 80px;
+  width: auto;
+  margin-right: 15px;
+}
+
+.navbar-brand {
+  color: #fff;
+  font-weight: bold;
+  font-size: 26px;
+  text-decoration: none;
+}
+
+.nav-link {
+  color: #fff;
+  margin-left: 15px;
+  font-size: 16px;
+  transition: 0.3s;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: #d4af37;
+}
+
+.btn-conta {
+  background-color: #BC9E5F;
+  color: #fff;
+  padding: 10px 25px;
+  border-radius: 6px;
+  margin-left: 15px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.btn-conta:hover {
+  background-color: #b8962e;
+}
+
+.navbar-toggler {
+  border-color: #fff;
+}
+
+.navbar-toggler .fas {
+  color: #fff !important;
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+@media (max-width: 991px) {
+  .navbar-collapse.show .navbar-nav {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .navbar-collapse.show .nav-link {
+    text-align: center;
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-collapse.show .btn-conta {
+    text-align: center;
+    display: inline-block;
+    width: 40%;
+    margin: 0.5rem 0;
+  }
+}
+
+.agendamento-container {
+  background-color: rgb(233, 229, 219);
+  min-height: calc(100vh - 200px);
+  padding: 2rem 0;
+}
+
+.agendamento-container h2 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.table {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.table thead th {
+  background-color: #333 !important;
+  color: white;
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-color: #dee2e6;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn-edit {
+  background-color: #BC9E5F;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn-edit:hover {
+  background-color: #b8962e;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+  color: white;
+}
+
+.actions-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actions-column .btn {
+  width: 80px;
+  min-width: 80px;
+}
+
+@media (max-width: 768px) {
+  .agendamento-container {
+    padding: 1rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+  
+  .btn-edit, .btn-delete {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .navbar-logo {
+    height: 60px;
+  }
+
+  .navbar-brand {
+    font-size: 18px;
+  }
+
+}
+
+@media (max-width: 380px) {
+  .navbar-logo {
+    height: 50px;
+  }
+
+  .navbar-brand {
+    font-size: 13px;
+  }
+}

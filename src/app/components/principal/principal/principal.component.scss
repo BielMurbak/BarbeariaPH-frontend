@@ -87,6 +87,10 @@
     max-width: 50%;
 
   }
+
+  .pagina-principal {
+  background-attachment: scroll; /* faz o fundo ficar fixo */
+}
 }
 
 @media (max-width: 380px) {

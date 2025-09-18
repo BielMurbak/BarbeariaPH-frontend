@@ -30,7 +30,7 @@
 .btn-conta {
   background-color: #BC9E5F;
   color: #fff;
-  padding: 6px 14px;
+  padding: 10px 25px;
   border-radius: 6px;
   margin-left: 15px;
   text-decoration: none;
@@ -39,6 +39,14 @@
 
 .btn-conta:hover {
   background-color: #b8962e;
+}
+
+.navbar-toggler {
+  border-color: #fff !important;
+}
+
+.navbar-toggler .fas {
+  color: #fff !important;
 }
 
 @media (max-width: 991px) {
