@@ -8,14 +8,15 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ClienteService {
 
+  private api = "http://localhost:8080/api/clientes";
 
- private api ="http://localhost:8080/api/clientes" 
-
-  
   constructor(private http: HttpClient) { }
 
   save(cliente: Cliente): Observable<Cliente> {
-  return this.http.post<Cliente>(this.api, cliente);
-}
+    return this.http.post<Cliente>(this.api, cliente);
+  }
 
+  listar(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(this.api);
+  }
 }
