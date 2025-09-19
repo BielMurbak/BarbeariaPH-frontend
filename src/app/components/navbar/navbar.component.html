@@ -18,10 +18,10 @@
       id="navbarNavAltMarkup"
     >
       <div class="navbar-nav">
-        <a class="nav-link" href="#">Sobre</a>
-        <a class="nav-link" href="#">Serviços</a>
-        <a class="nav-link" href="#">Contato</a>
-        <a class="btn-conta" routerLink="/login">Agendamentos</a>
+        <button class="nav-link" (click)="scrollToSection('sobre')">Sobre</button>
+        <button class="nav-link" (click)="scrollToSection('servicos')">Serviços</button>
+        <button class="nav-link" (click)="scrollToSection('contato')">Contato</button>
+        <button class="btn-conta" (click)="navigateToAgendamentos()">Agendamentos</button>
       </div>
     </div>
   </div>

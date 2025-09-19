@@ -6,5 +6,5 @@ import { AgendamentoListComponent } from './components/agendamento-list/agendame
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
-  { path: 'agendamento-list', component: AgendamentoListComponent },
+  { path: 'agendamentos', component: AgendamentoListComponent },
 ];
