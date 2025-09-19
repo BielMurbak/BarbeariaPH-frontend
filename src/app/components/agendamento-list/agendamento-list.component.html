@@ -18,10 +18,10 @@
       id="navbarNavAltMarkup"
     >
       <div class="navbar-nav">
-        <a class="nav-link" href="#">Agendamentos</a>
-        <a class="nav-link" href="#">Históricos</a>
-        <a class="nav-link" href="#">Meus Dados</a>
-        <a class="btn-conta" routerLink="/">Sair</a>
+        <a class="nav-link" (click)="mostrarSecao('agendamentos')" [class.active]="secaoAtiva === 'agendamentos'">Agendamentos</a>
+        <a class="nav-link" (click)="mostrarSecao('historico')" [class.active]="secaoAtiva === 'historico'">Históricos</a>
+        <a class="nav-link" (click)="mostrarSecao('dados')" [class.active]="secaoAtiva === 'dados'">Meus Dados</a>
+        <a class="btn-conta" routerLink="/login">Sair</a>
       </div>
     </div>
   </div>
@@ -29,9 +29,12 @@
 
 <div class="agendamento-container">
   <div class="container">
-    <h2 class="text-center mb-4">Lista de Agendamentos</h2>
+    <h2 class="text-center mb-4" *ngIf="secaoAtiva === 'agendamentos'">Lista de Agendamentos</h2>
+    <h2 class="text-center mb-4" *ngIf="secaoAtiva === 'historico'">Histórico de Atendimentos</h2>
+    <h2 class="text-center mb-4" *ngIf="secaoAtiva === 'dados'">Meus Dados</h2>
     
-    <div class="table-responsive">
+    <!-- Tabela de Agendamentos -->
+    <div class="table-responsive" *ngIf="secaoAtiva === 'agendamentos'">
       <table class="table table-striped table-hover">
         <thead class="table-dark">
           <tr>
@@ -60,7 +63,66 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Tabela de Histórico -->
+    <div class="table-responsive" *ngIf="secaoAtiva === 'historico'">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">Cliente</th>
+            <th scope="col">Serviço</th>
+            <th scope="col">Valor</th>
+            <th scope="col">Barbeiro</th>
+            <th scope="col">Data/Hora</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let historico of historicos">
+            <td>{{ historico.cliente }}</td>
+            <td>{{ historico.servico }}</td>
+            <td>{{ historico.valor }}</td>
+            <td>{{ historico.barbeiro }}</td>
+            <td>{{ historico.dataHora }}</td>
+            <td>
+              <span class="badge bg-success">{{ historico.status }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Formulário de Dados -->
+    <div *ngIf="secaoAtiva === 'dados'" class="dados-form">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="form-container">
+            <div class="form-outline mb-3">
+              <input type="text" class="form-control" [(ngModel)]="dadosCliente.nome" placeholder=" " />
+              <label class="form-label">Nome</label>
+            </div>
+            
+            <div class="form-outline mb-3">
+              <input type="text" class="form-control" [(ngModel)]="dadosCliente.sobrenome" placeholder=" " />
+              <label class="form-label">Sobrenome</label>
+            </div>
+            
+            <div class="form-outline mb-4">
+              <input type="tel" class="form-control" [(ngModel)]="dadosCliente.telefone" placeholder=" " />
+              <label class="form-label">Telefone</label>
+            </div>
+            
+            <button class="btn btn-primary btn-block" (click)="salvarDados()">Salvar Alterações</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<app-footer></app-footer>
+<app-agendamento 
+  [showModal]="showModalAgendamento" 
+  (modalClosed)="fecharModalAgendamento()">
+</app-agendamento>
+
+<app-footer (abrirModal)="abrirModalAgendamento()"></app-footer>

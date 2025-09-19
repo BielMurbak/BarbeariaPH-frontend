@@ -23,8 +23,22 @@
         <label class="form-label" for="telefone">Telefone</label>
       </div>
       <button type="submit" class="btn btn-primary btn-block mb-4">Entrar</button>
+      
+      <!-- Alerta de erro -->
+      <div *ngIf="mostrarErro" class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ mensagemErro }}
+        <button type="button" class="btn-close" (click)="fecharAlerta()"></button>
+      </div>
+      
+      <button type="button" class="btn btn-secondary btn-block" (click)="agendar()">Agendar</button>
     </form>
   </div>
 </div>
 
-<app-footer></app-footer>
+<app-agendamento 
+  [showModal]="showModal" 
+  (modalClosed)="fecharModal()">
+</app-agendamento>
+
+<app-footer (abrirModal)="agendar()"></app-footer>

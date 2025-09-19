@@ -84,6 +84,43 @@
   background-color: #b8962e;
 }
 
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  font-weight: bold;
+  transition: 0.3s;
+  margin-top: 1rem;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.alert {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ffeaa7;
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.alert-warning {
+  border-color: #ffeaa7;
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  float: right;
+  color: #856404;
+}
+
 .btn-block {
   display: block;
   width: 100%;
