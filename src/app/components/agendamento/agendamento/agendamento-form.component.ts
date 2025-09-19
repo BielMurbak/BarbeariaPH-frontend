@@ -1,13 +1,17 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
-import { FormsModule } from '@angular/forms';
+
 import { AgendamentoService } from '../../../services/agendamento/agendamento.service';
+import { ClienteService } from '../../../services/cliente/cliente.service';
+import { ProfissionalService } from '../../../services/profissional/profissional.service';
+import { ServicoService } from '../../../services/servico/servico.service';
+import { ProfissionalservicoService } from '../../../services/profissionalservico/profissionalservico.service';
 import { Agendamento } from '../../../models/agendamento/agendamento';
 
 @Component({
   selector: 'app-agendamento',
-  imports: [CommonModule,FormsModule],
+  imports: [CommonModule],
   templateUrl: './agendamento-form.component.html',
   styleUrl: './agendamento-form.component.scss'
 })
@@ -15,20 +19,28 @@ export class AgendamentoComponent implements OnInit {
 @Input() showModal: boolean = false;
 @Output() modalClosed = new EventEmitter<void>();
 
-constructor(private agendamentoService: AgendamentoService) {}
+constructor(
+  private agendamentoService: AgendamentoService,
+  private clienteService: ClienteService,
+  private profissionalService: ProfissionalService,
+  private servicoService: ServicoService,
+  private profissionalServicoService: ProfissionalservicoService
+) {}
 
 etapaAtual: string = 'servicos';
 servicoSelecionado: string = '';
 profissionalSelecionado: string = '';
 dataSelecionada: string = '';
 horarioSelecionado: string = '';
-telefoneAdicionar: string = "";
+
 agendamentoId: number | null = null;
+
 
 mostrarCombos: boolean = false;              
 mostrarTipoCorte: boolean = false;          
 mostrarServicosAdicionais: boolean = false;  
 resumo : boolean = false;
+jaCadastradoNoBanco : boolean = false;
 
 servicosAdicionaisSelecionados: string[] = []; 
 
@@ -56,7 +68,6 @@ fecharModal() {
   this.profissionalSelecionado = '';
   this.dataSelecionada = '';
   this.horarioSelecionado = '';
-  this.telefoneAdicionar = '';
   this.agendamentoId = null;
   this.modalClosed.emit();
 }
@@ -104,7 +115,7 @@ selecionarServicosAdicionais(servico: string) {
   } else {
     this.servicosAdicionaisSelecionados.push(servico);
   }
-  // this.salvarEtapa('servicosAdicionais', this.servicosAdicionaisSelecionados);
+
 }
 
 continuarServicosAdicionais() {
@@ -115,13 +126,13 @@ continuarServicosAdicionais() {
 
 selecionarProfissional(profissional: string) {
   this.profissionalSelecionado = profissional;
-  // this.salvarEtapa('profissional', profissional);
+
   this.etapaAtual = 'data';
 }
 
 adicionarTelefone(horario: string) {
   this.horarioSelecionado = horario;
-  // this.salvarEtapa('horario', horario);
+  
   this.etapaAtual = "telefone";
 }
 
@@ -141,28 +152,25 @@ voltarEtapa() {
   else if(this.etapaAtual === 'telefone') this.etapaAtual = 'horario';
 }
 
-salvarEtapa(campo: string, valor: any) {
-  const agendamento = {
-    id: this.agendamentoId,
-    [campo]: valor,
-    status: 'RASCUNHO'
-  };
-
-  this.agendamentoService.salvarEtapa(agendamento).subscribe({
-    next: (response) => {
-      if (!this.agendamentoId) {
-        this.agendamentoId = response.id;
-      }
-      console.log(`${campo} salvo:`, valor);
+jaCadastrado(telefone: string) {
+  this.clienteService.listar().subscribe({
+    next: (clientes) => {
+      console.log('Lista de clientes do banco:', clientes);
+      console.log('Telefone buscado:', telefone);
+      const clienteExiste = clientes.some(cliente => cliente.celular === telefone);
+      this.jaCadastradoNoBanco = clienteExiste;
+      console.log('Cliente já cadastrado:', clienteExiste);
     },
     error: (error) => {
-      console.error(`Erro ao salvar ${campo}:`, error);
+      console.error('Erro ao buscar clientes:', error);
     }
   });
 }
 
-finalizarAgendamento() {
-  if (!this.telefoneAdicionar) {
+finalizarAgendamento(telefoneInput: HTMLInputElement) {
+  const telefone = telefoneInput.value;
+  
+  if (!telefone) {
     Swal.fire({
       title: 'Digite seu telefone!',
       icon: 'warning',
@@ -171,90 +179,107 @@ finalizarAgendamento() {
     return;
   }
 
-  // 1. Criar cliente
+if (this.jaCadastradoNoBanco) {
+  this.clienteService.listar().subscribe({
+    next: (clientes) => {
+      const clienteExistente = clientes.find(cliente => cliente.celular === telefone);
+
+      if (clienteExistente) {
+        const cliente = {
+          id: clienteExistente.id,
+          nome: clienteExistente.nome,
+          sobrenome: clienteExistente.sobrenome,
+          celular: clienteExistente.celular
+        };
+
+        this.criarServicoEAgendamento(cliente);
+      }
+    },
+    error: (error) => {
+      console.error('Erro ao buscar cliente existente:', error);
+    }
+  });
+} else {
+  const nomeInput = document.getElementById('nomeInput') as HTMLInputElement;
+  const sobrenomeInput = document.getElementById('sobrenomeInput') as HTMLInputElement;
+
   const cliente = {
-    nome: this.telefoneAdicionar || 'Cliente',
-    sobrenome: 'Teste',
-    celular: this.telefoneAdicionar || '11999999999'
+    nome: nomeInput?.value,
+    sobrenome: sobrenomeInput?.value,
+    celular: telefone
   };
 
-  console.log('Dados do cliente real:', cliente);
-  console.log('telefoneAdicionar:', this.telefoneAdicionar);
-  this.agendamentoService.criarCliente(cliente).subscribe({
+  this.clienteService.save(cliente).subscribe({
     next: (clienteResponse) => {
-      // 2. Criar profissional
-      const profissional = {
-        nome: this.profissionalSelecionado,
-        sobrenome: 'Profissional',
-        celular: '00000000000',
-        especializacao: this.getEspecializacao(this.servicoSelecionado)
+      this.criarServicoEAgendamento(clienteResponse);
+    },
+    error: (error) => {
+      console.error('Erro completo do cliente:', error);
+      Swal.fire({
+        title: 'Erro ao criar cliente!',
+        text: `Erro: ${error.status} - ${JSON.stringify(error.error)}`,
+        icon: 'error',
+        confirmButtonText: 'Fechar'
+      });
+    }
+  });
+}
+}
+
+
+criarServicoEAgendamento(clienteResponse: any) {
+  // 2. Criar serviço
+  const servico = {
+    descricao: this.servicoSelecionado,
+    minDeDuracao: this.getDuracao(this.servicoSelecionado)
+  };
+
+  this.servicoService.save(servico).subscribe({
+    next: (servicoResponse) => {
+      // 3. Criar profissionalServico
+      const profissionalServico: any = {
+        profissionalEntity: { id: 1 },
+        servicoEntity: { id: servicoResponse.id },
+        preco: parseFloat(this.calcularTotal())
       };
 
-      console.log('Dados do profissional:', profissional);
-      console.log('Especialização mapeada:', this.getEspecializacao(this.profissionalSelecionado));
-      this.agendamentoService.criarProfissional(profissional).subscribe({
-        next: (profissionalResponse) => {
-          // 3. Criar serviço
-          const servico = {
-            descricao: this.servicoSelecionado,
-            minDeDuracao: this.getDuracao(this.servicoSelecionado)
+      this.profissionalServicoService.save(profissionalServico).subscribe({
+        next: (profissionalServicoResponse) => {
+          // 4. Criar agendamento
+          const agendamento = {
+            data: this.formatarDataParaISO(),
+            local: "Barbearia PH",
+            horario: this.horarioSelecionado,
+            status: "PENDENTE",
+            clienteEntity: { id: clienteResponse.id! },
+            profissionalServicoEntity: { id: profissionalServicoResponse.id! }
           };
 
-          this.agendamentoService.criarServico(servico).subscribe({
-            next: (servicoResponse) => {
-              // 4. Criar profissionalServico
-              const profissionalServico = {
-                profissionalEntity: { id: profissionalResponse.id },
-                servicoEntity: { id: servicoResponse.id },
-                preco: parseFloat(this.calcularTotal())
-              };
+          console.log('=== DADOS DO AGENDAMENTO ===');
+          console.log('Data formatada:', this.formatarDataParaISO());
+          console.log('Horário:', this.horarioSelecionado);
+          console.log('Cliente ID:', clienteResponse.id);
+          console.log('ProfissionalServico ID:', profissionalServicoResponse.id);
+          console.log('Agendamento completo:', agendamento);
 
-              this.agendamentoService.criarProfissionalServico(profissionalServico).subscribe({
-                next: (profissionalServicoResponse) => {
-                  // 5. Criar agendamento
-                  const agendamento = {
-                    data: this.formatarDataParaISO(),
-                    local: "Barbearia PH",
-                    horario: this.horarioSelecionado,
-                    status: "PENDENTE",
-                    clienteEntity: { id: clienteResponse.id },
-                    profissionalServicoEntity: { id: profissionalServicoResponse.id }
-                  };
-
-                  this.agendamentoService.salvar(agendamento).subscribe({
-                    next: (response) => {
-                      Swal.fire({
-                        title: 'Agendamento confirmado!',
-                        text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
-                        icon: 'success',
-                        confirmButtonText: 'Fechar'
-                      });
-                      this.fecharModal();
-                    },
-                    error: (error) => {
-                      Swal.fire({
-                        title: 'Erro ao criar agendamento!',
-                        text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível Ag'}`,
-                        icon: 'error',
-                        confirmButtonText: 'Fechar'
-                      });
-                    }
-                  });
-                },
-                error: (error) => {
-                  Swal.fire({
-                    title: 'Erro ao criar profissional/serviço!',
-                    text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível PS'}`,
-                    icon: 'error',
-                    confirmButtonText: 'Fechar'
-                  });
-                }
+          this.agendamentoService.salvar(agendamento).subscribe({
+            next: (response) => {
+              Swal.fire({
+                title: 'Agendamento confirmado!',
+                text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
+                icon: 'success',
+                confirmButtonText: 'Fechar'
               });
+              this.fecharModal();
             },
             error: (error) => {
+              console.error('=== ERRO NO AGENDAMENTO ===');
+              console.error('Status:', error.status);
+              console.error('Error completo:', error);
+              console.error('Error body:', error.error);
               Swal.fire({
-                title: 'Erro ao criar serviço!',
-                text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível'}`,
+                title: 'Erro ao criar agendamento!',
+                text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
                 icon: 'error',
                 confirmButtonText: 'Fechar'
               });
@@ -262,11 +287,9 @@ finalizarAgendamento() {
           });
         },
         error: (error) => {
-          console.error('Erro completo do profissional:', error);
-          console.error('Error body profissional:', error.error);
           Swal.fire({
-            title: 'Erro ao criar profissional!',
-            text: `Erro: ${error.status} - ${JSON.stringify(error.error)}`,
+            title: 'Erro ao criar profissional/serviço!',
+            text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível PS'}`,
             icon: 'error',
             confirmButtonText: 'Fechar'
           });
@@ -274,11 +297,9 @@ finalizarAgendamento() {
       });
     },
     error: (error) => {
-      console.error('Erro completo do cliente:', error);
-      console.error('Error body:', error.error);
       Swal.fire({
-        title: 'Erro ao criar cliente!',
-        text: `Erro: ${error.status} - ${JSON.stringify(error.error)}`,
+        title: 'Erro ao criar serviço!',
+        text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível'}`,
         icon: 'error',
         confirmButtonText: 'Fechar'
       });
@@ -362,7 +383,7 @@ selecionarDia(dia: number) {
     
     this.diaSelecionado = dia;
     this.dataSelecionada = `${dia}/${this.dataAtual.getMonth() + 1}/${this.anoAtual}`;
-    // this.salvarEtapa('data', this.formatarDataParaISO());
+    
     this.etapaAtual = 'horario'; 
   }
 }
@@ -374,8 +395,14 @@ isDomingo(dia: number): boolean {
 }
 
 formatarDataParaISO(): string {
+  if (!this.dataSelecionada) {
+    console.error('Data não selecionada!');
+    return '';
+  }
   const [dia, mes, ano] = this.dataSelecionada.split('/');
-  return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  console.log('Data original:', this.dataSelecionada, 'Data formatada:', dataFormatada);
+  return dataFormatada;
 }
 
 getEspecializacao(servico: string): string {
@@ -420,4 +447,5 @@ calcularTotal(): string {
   return total.toFixed(2);
 }
 
-}
+};
+  

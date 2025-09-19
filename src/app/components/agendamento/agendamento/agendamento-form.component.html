@@ -183,14 +183,8 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
  @if (etapaAtual === 'profissional') {
 <div class="modal-agendamento-mid">
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Xiru Enzo Gabriel')">
-<h3>Xiru Enzo Gabriel</h3>
-</button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Gabriel de Campos')">
-<h3>Gabriel de Campos</h3>
-</button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Adryan Jacinto')">
-<h3>Adryan Jacinto</h3>
+<button type="button" class="modal-agendamento-servicos-container" (click)="selecionarProfissional('Patrick Henrique')">
+<h3>Patrick Henrique</h3>
 </button>
 <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
 </div>
@@ -251,12 +245,26 @@ ele muda dinamicamente para parágrafo mais adequado -->
 @if (etapaAtual === 'telefone') {
 <div class="modal-agendamento-mid">
 <div class="form-outline" data-mdb-input-init>
-<input type="tel" id="typeURL" class="form-control" [(ngModel)]="telefoneAdicionar" />
-<label class="form-label" for="typeURL">Digite seu WhatsApp</label>
+<input type="tel" id="typeURL" class="form-control" #telefoneInput (input)="jaCadastrado(telefoneInput.value)" />
+<label class="form-label" for="typeURL">Digite seu WhatsApp</label> 
 </div>
 
+@if(!jaCadastradoNoBanco){
+<div class="form-outline" data-mdb-input-init>
+<input type="text" id="nomeInput" class="form-control" #nomeInput/>
+<label class="form-label" for="nomeInput">Digite seu Nome </label> 
+</div>
+
+<div class="form-outline" data-mdb-input-init>
+<input type="text" id="sobrenomeInput" class="form-control" #sobrenomeInput/>
+<label class="form-label" for="sobrenomeInput">Sobrenome</label> 
+</div>
+}
+
+
+
 <div class="box-button">
-<button type="button" class="btn btn-primary" data-mdb-ripple-init (click)="finalizarAgendamento()">Agendar</button>
+<button type="button" class="btn btn-primary" data-mdb-ripple-init (click)="finalizarAgendamento(telefoneInput)">Agendar</button>
 </div>
 
 <div class="box-voltar">
