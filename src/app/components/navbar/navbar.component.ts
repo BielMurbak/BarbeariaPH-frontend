@@ -23,7 +23,7 @@ export class NavbarComponent {
     if (element) {
       element.scrollIntoView({ 
         behavior: 'smooth',
-        block: 'start'
+        block: 'center'
       });
       console.log('Scroll executado');
     } else {
