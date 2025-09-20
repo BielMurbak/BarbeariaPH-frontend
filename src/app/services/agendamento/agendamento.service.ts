@@ -14,4 +14,8 @@ export class AgendamentoService {
   salvar(agendamento: Agendamento): Observable<Agendamento> {
     return this.http.post<Agendamento>(this.api, agendamento);
   }
+
+   listar(): Observable<Agendamento[]> {
+      return this.http.get<Agendamento[]>(this.api);
+    }
 }

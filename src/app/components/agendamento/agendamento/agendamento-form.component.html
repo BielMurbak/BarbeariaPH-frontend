@@ -163,7 +163,7 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
 @if (servicoSelecionado !== 'Barba') {
 <label class="modal-agendamento-servicos-container">      
-<input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Barba')" (change)="selecionarServicosAdicionais('Barba')" />
+<input type="checkbox" [checked]="servicosAdicionaisSelecionados.includes('Barba')"(change)="selecionarServicosAdicionais('Barba')" />
 <h3>Barba R$ 35,00</h3>
 </label>
 }
@@ -229,15 +229,17 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
 @if (etapaAtual === 'horario') {
 <div class="modal-agendamento-mid">
-<button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('09:00')">
-<h3>09:00</h3>
+<div class="horarios-scroll">
+@for (horario of todosHorarios; track horario) {
+@if (!horariosMarcados.includes(horario)) {
+<button type="button" 
+        class="modal-agendamento-servicos-container" 
+        (click)="selecionarHorario(horario)">
+<h3>{{horario}}</h3>
 </button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('10:00')">
-<h3>10:00</h3>
-</button>
-<button type="button" class="modal-agendamento-servicos-container" (click)="adicionarTelefone('11:00')">
-<h3>11:00</h3>
-</button>
+}
+}
+</div>
 <button type="button" class="btn-voltar" (click)="voltarEtapa()">Voltar</button>
 </div>
 }

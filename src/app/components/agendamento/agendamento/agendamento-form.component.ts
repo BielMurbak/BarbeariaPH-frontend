@@ -57,6 +57,60 @@ lista = [
   { etapa: "telefone", titulo: "Telefone", texto: "Digite seu telefone." }
 ];
 
+todosHorarios = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'];
+
+horariosMarcados: string[] = [];
+
+buscarHorariosMarcados() {
+  const dataFormatada = this.formatarDataParaISO();
+  this.agendamentoService.listar().subscribe({
+    next: (agendamentos) => {
+      const agendamentosHoje = agendamentos.filter(item => item.data === dataFormatada);
+      this.horariosMarcados = [];
+      
+      agendamentosHoje.forEach(agendamento => {
+        const duracao = (agendamento as any).profissionalServicoEntity?.servicoEntity?.minDeDuracao || 60;
+        const horariosOcupados = this.calcularHorariosOcupados(agendamento.horario, duracao);
+        this.horariosMarcados.push(...horariosOcupados);
+      });
+      
+      this.etapaAtual = 'horario';
+    },
+    error: (error) => {
+      console.error('Erro ao buscar horários:', error);
+      this.horariosMarcados = [];
+      this.etapaAtual = 'horario';
+    }
+  });
+}
+
+calcularHorariosOcupados(horarioInicio: string, duracao: number): string[] {
+  const horariosOcupados = [];
+  const [hora, minuto] = horarioInicio.split(':').map(Number);
+  let totalMinutos = hora * 60 + minuto;
+  
+  for (let i = 0; i < duracao; i += 30) {
+    const h = Math.floor(totalMinutos / 60);
+    const m = totalMinutos % 60;
+    const horarioFormatado = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    
+    if (this.todosHorarios.includes(horarioFormatado)) {
+      horariosOcupados.push(horarioFormatado);
+    }
+    
+    totalMinutos += 30;
+  }
+  
+  return horariosOcupados;
+}
+
+
+selecionarHorario(horario: string) {
+  this.horarioSelecionado = horario;
+  this.etapaAtual = 'telefone';
+}
+
+
 fecharModal() {
   this.etapaAtual = 'servicos';
   this.mostrarCombos = false;
@@ -384,7 +438,7 @@ selecionarDia(dia: number) {
     this.diaSelecionado = dia;
     this.dataSelecionada = `${dia}/${this.dataAtual.getMonth() + 1}/${this.anoAtual}`;
     
-    this.etapaAtual = 'horario'; 
+    this.buscarHorariosMarcados();
   }
 }
 
@@ -447,5 +501,4 @@ calcularTotal(): string {
   return total.toFixed(2);
 }
 
-};
-  
+}

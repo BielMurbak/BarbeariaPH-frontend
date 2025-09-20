@@ -1,0 +1,10 @@
+@for (horario of todosHorarios; track horario) {
+@if (!horariosMarcados.includes(horario)) {
+<button type="button" 
+        class="modal-agendamento-servicos-container" 
+        [class.selecionado]="horario === horarioSelecionado"
+        (click)="selecionarHorario(horario)">
+<h3>{{horario}}</h3>
+</button>
+}
+}
