@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FooterComponent } from '../footer/footer.component';
 import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-form.component';
+import { ClienteService } from '../../services/cliente/cliente.service';
+import { AuthService } from '../../services/auth.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +20,11 @@ export class LoginComponent {
   mensagemErro = '';
   showModal = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private clienteService: ClienteService,
+    private authService: AuthService
+  ) {}
 
   login() {
     if (!this.telefone) {
@@ -26,20 +33,25 @@ export class LoginComponent {
       return;
     }
     
-    const clienteExiste = this.verificarCliente(this.telefone);
-    
-    if (clienteExiste) {
-      this.router.navigate(['/agendamento-list']);
-    } else {
-      this.mostrarErro = true;
-      this.mensagemErro = 'Ops! Parece que você ainda não possui agendamentos conosco. Para acessar sua área, é necessário realizar pelo menos um agendamento primeiro. Clique em "Agendar" abaixo para começar!';
-    }
+    this.clienteService.listar().subscribe({
+      next: (clientes) => {
+        const cliente = clientes.find(c => c.celular === this.telefone);
+        
+        if (cliente) {
+          this.authService.login(cliente);
+          this.router.navigate(['/agendamentos']);
+        } else {
+          this.mostrarErro = true;
+          this.mensagemErro = 'Ops! Parece que você ainda não possui agendamentos conosco. Para acessar sua área, é necessário realizar pelo menos um agendamento primeiro. Clique em "Agendar" abaixo para começar!';
+        }
+      },
+      error: () => {
+        Swal.fire('Erro', 'Erro ao verificar cliente', 'error');
+      }
+    });
   }
 
-  verificarCliente(telefone: string): boolean {
-    const clientesCadastrados = ['(11) 99999-9999', '(11) 88888-8888'];
-    return clientesCadastrados.includes(telefone);
-  }
+
 
   fecharAlerta() {
     this.mostrarErro = false;
@@ -55,5 +67,19 @@ export class LoginComponent {
 
   voltar() {
     this.router.navigate(['/']);
+  }
+
+  formatarTelefone(event: any) {
+    let valor = event.target.value.replace(/\D/g, '');
+    if (valor.length >= 11) {
+      valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (valor.length >= 10) {
+      valor = valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else if (valor.length >= 6) {
+      valor = valor.replace(/(\d{2})(\d{4})/, '($1) $2');
+    } else if (valor.length >= 2) {
+      valor = valor.replace(/(\d{2})/, '($1) ');
+    }
+    this.telefone = valor;
   }
 }

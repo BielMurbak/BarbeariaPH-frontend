@@ -19,17 +19,21 @@
           class="form-control"
           [(ngModel)]="telefone" 
           name="telefone"
+          placeholder="(__) _____-____"
+          (input)="formatarTelefone($event)"
           required>
         <label class="form-label" for="telefone">Telefone</label>
       </div>
       <button type="submit" class="btn btn-primary btn-block mb-4">Entrar</button>
       
       <!-- Alerta de erro -->
-      <div *ngIf="mostrarErro" class="alert alert-warning alert-dismissible fade show" role="alert">
+      @if (mostrarErro) {
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-triangle me-2"></i>
         {{ mensagemErro }}
         <button type="button" class="btn-close" (click)="fecharAlerta()"></button>
       </div>
+      }
       
       <button type="button" class="btn btn-secondary btn-block" (click)="agendar()">Agendar</button>
     </form>

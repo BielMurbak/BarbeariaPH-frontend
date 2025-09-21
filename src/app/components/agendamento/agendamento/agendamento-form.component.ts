@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 import { AgendamentoService } from '../../../services/agendamento/agendamento.service';
@@ -7,6 +8,7 @@ import { ClienteService } from '../../../services/cliente/cliente.service';
 import { ProfissionalService } from '../../../services/profissional/profissional.service';
 import { ServicoService } from '../../../services/servico/servico.service';
 import { ProfissionalservicoService } from '../../../services/profissionalservico/profissionalservico.service';
+import { AuthService } from '../../../services/auth.service';
 import { Agendamento } from '../../../models/agendamento/agendamento';
 
 @Component({
@@ -24,7 +26,9 @@ constructor(
   private clienteService: ClienteService,
   private profissionalService: ProfissionalService,
   private servicoService: ServicoService,
-  private profissionalServicoService: ProfissionalservicoService
+  private profissionalServicoService: ProfissionalservicoService,
+  private authService: AuthService,
+  private router: Router
 ) {}
 
 etapaAtual: string = 'servicos';
@@ -318,13 +322,16 @@ criarServicoEAgendamento(clienteResponse: any) {
 
           this.agendamentoService.salvar(agendamento).subscribe({
             next: (response) => {
+              this.authService.login(clienteResponse);
               Swal.fire({
                 title: 'Agendamento confirmado!',
                 text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
                 icon: 'success',
-                confirmButtonText: 'Fechar'
+                confirmButtonText: 'Ver meus agendamentos'
+              }).then(() => {
+                this.fecharModal();
+                this.router.navigate(['/agendamentos']);
               });
-              this.fecharModal();
             },
             error: (error) => {
               console.error('=== ERRO NO AGENDAMENTO ===');
@@ -499,6 +506,20 @@ calcularTotal(): string {
   });
   
   return total.toFixed(2);
+}
+
+formatarTelefone(event: any) {
+  let valor = event.target.value.replace(/\D/g, '');
+  if (valor.length >= 11) {
+    valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  } else if (valor.length >= 10) {
+    valor = valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  } else if (valor.length >= 6) {
+    valor = valor.replace(/(\d{2})(\d{4})/, '($1) $2');
+  } else if (valor.length >= 2) {
+    valor = valor.replace(/(\d{2})/, '($1) ');
+  }
+  event.target.value = valor;
 }
 
 }

@@ -247,8 +247,8 @@ ele muda dinamicamente para parágrafo mais adequado -->
 @if (etapaAtual === 'telefone') {
 <div class="modal-agendamento-mid">
 <div class="form-outline" data-mdb-input-init>
-<input type="tel" id="typeURL" class="form-control" #telefoneInput (input)="jaCadastrado(telefoneInput.value)" />
-<label class="form-label" for="typeURL">Digite seu WhatsApp</label> 
+<input type="tel" id="typeURL" class="form-control" placeholder="(__) _____-____" #telefoneInput (input)="formatarTelefone($event); jaCadastrado(telefoneInput.value)" />
+<label class="form-label" for="typeURL">Digite seu telefone</label> 
 </div>
 
 @if(!jaCadastradoNoBanco){
