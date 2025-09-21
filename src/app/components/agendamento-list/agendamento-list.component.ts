@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FooterComponent } from '../footer/footer.component';
 import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-form.component';
+import { AgendamentoService } from '../../services/agendamento/agendamento.service';
+import { Agendamento } from '../../models/agendamento/agendamento';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-agendamento-list',
@@ -11,25 +14,27 @@ import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-for
   templateUrl: './agendamento-list.component.html',
   styleUrl: './agendamento-list.component.scss'
 })
-export class AgendamentoListComponent {
-  agendamentos = [
-    {
-      id: 1,
-      cliente: 'João Silva',
-      servico: 'Corte + Barba',
-      valor: 'R$ 45,00',
-      barbeiro: 'Carlos',
-      dataHora: '15/12/2024 14:30'
-    },
-    {
-      id: 2,
-      cliente: 'Pedro Santos',
-      servico: 'Corte',
-      valor: 'R$ 25,00',
-      barbeiro: 'João',
-      dataHora: '15/12/2024 16:00'
-    }
-  ];
+export class AgendamentoListComponent implements OnInit {
+  agendamentos: Agendamento[] = [];
+  agendamentoEditando: Agendamento | null = null;
+  mostrarFormEdicao = false;
+
+  constructor(private agendamentoService: AgendamentoService) {}
+
+  ngOnInit() {
+    this.carregarAgendamentos();
+  }
+
+  carregarAgendamentos() {
+    this.agendamentoService.listar().subscribe({
+      next: (agendamentos) => {
+        this.agendamentos = agendamentos;
+      },
+      error: (error) => {
+        Swal.fire('Erro', 'Erro ao carregar agendamentos', 'error');
+      }
+    });
+  }
 
   historicos = [
     {
@@ -83,11 +88,51 @@ export class AgendamentoListComponent {
     this.showModalAgendamento = false;
   }
 
-  editar(id: number) {
-    console.log('Editar agendamento:', id);
+  editar(agendamento: Agendamento) {
+    this.agendamentoEditando = { ...agendamento };
+    this.mostrarFormEdicao = true;
+  }
+
+  salvarEdicao() {
+    if (this.agendamentoEditando && this.agendamentoEditando.id) {
+      this.agendamentoService.atualizar(this.agendamentoEditando.id, this.agendamentoEditando).subscribe({
+        next: () => {
+          Swal.fire('Sucesso', 'Agendamento atualizado!', 'success');
+          this.carregarAgendamentos();
+          this.cancelarEdicao();
+        },
+        error: () => {
+          Swal.fire('Erro', 'Erro ao atualizar agendamento', 'error');
+        }
+      });
+    }
+  }
+
+  cancelarEdicao() {
+    this.agendamentoEditando = null;
+    this.mostrarFormEdicao = false;
   }
 
   excluir(id: number) {
-    console.log('Excluir agendamento:', id);
+    Swal.fire({
+      title: 'Confirmar exclusão',
+      text: 'Deseja realmente excluir este agendamento?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.agendamentoService.deletar(id).subscribe({
+          next: () => {
+            Swal.fire('Sucesso', 'Agendamento excluído!', 'success');
+            this.carregarAgendamentos();
+          },
+          error: () => {
+            Swal.fire('Erro', 'Erro ao excluir agendamento', 'error');
+          }
+        });
+      }
+    });
   }
 }
