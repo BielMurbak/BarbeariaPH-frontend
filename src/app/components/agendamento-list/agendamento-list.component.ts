@@ -150,14 +150,28 @@ export class AgendamentoListComponent implements OnInit {
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
     
-    const servico = this.servicosDisponiveis.find(s => s.nome === novoServico);
-    if (servico && this.agendamentoEditando.profissionalServicoEntity) {
-      this.agendamentoEditando.profissionalServicoEntity.preco = servico.preco;
-      if (!this.agendamentoEditando.profissionalServicoEntity.servicoEntity) {
-        this.agendamentoEditando.profissionalServicoEntity.servicoEntity = {};
+    // Buscar o ProfissionalServicoEntity correto do backend
+    this.agendamentoService.listar().subscribe({
+      next: (agendamentos) => {
+        // Pegar qualquer agendamento para encontrar profissional-serviços disponíveis
+        const agendamentoExemplo = agendamentos[0];
+        if (agendamentoExemplo) {
+          // Fazer requisição para buscar todos os profissional-serviços
+          fetch('http://localhost:8080/api/profissionais/servicos')
+            .then(response => response.json())
+            .then((profServicos: any[]) => {
+              const profServicoCorreto = profServicos.find(ps => 
+                ps.servicoEntity?.descricao === novoServico
+              );
+              
+              if (profServicoCorreto && this.agendamentoEditando) {
+                this.agendamentoEditando.profissionalServicoEntity = profServicoCorreto;
+              }
+            })
+            .catch(error => console.error('Erro ao buscar profissional-serviços:', error));
+        }
       }
-      this.agendamentoEditando.profissionalServicoEntity.servicoEntity.descricao = novoServico;
-    }
+    });
   }
 
   salvarEdicao() {
