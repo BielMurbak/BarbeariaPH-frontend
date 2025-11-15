@@ -1,0 +1,63 @@
+.custom-navbar {
+  background-color: rgb(35, 35, 36);
+  padding: 20px 20px;
+}
+
+.navbar-logo {
+  height: 80px;
+  width: auto;
+  margin-right: 15px;
+}
+
+.navbar-brand {
+  color: #fff;
+  font-weight: bold;
+  font-size: 26px;
+  text-decoration: none;
+}
+
+.nav-link {
+  color: #fff;
+  margin-left: 15px;
+  font-size: 16px;
+  transition: 0.3s;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  color: #d4af37;
+}
+
+.nav-link.active {
+  color: #d4af37 !important;
+  font-weight: bold;
+}
+
+.btn-conta {
+  background-color: #BC9E5F;
+  color: #fff;
+  padding: 10px 25px;
+  border-radius: 6px;
+  margin-left: 15px;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-conta:hover {
+  background-color: #b8962e;
+}
+
+.navbar-toggler {
+  border-color: #fff;
+}
+
+.navbar-toggler .fas {
+  color: #fff !important;
+}
+
+.agendamento-container {
+  margin-top: 2rem;
+  padding: 2rem 0;
+}

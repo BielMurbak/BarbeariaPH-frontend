@@ -1,10 +1,7 @@
-import { ProfissionalservicoService } from "../../services/profissionalservico/profissionalservico.service";
-
 export interface Profissional {
   id?: number;
   nome: string;
-  telefone?: string;
+  celular: string;
   email?: string;
-  profissionais?: ProfissionalservicoService[];
 }
 

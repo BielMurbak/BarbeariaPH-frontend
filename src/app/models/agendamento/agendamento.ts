@@ -8,6 +8,7 @@ export interface Agendamento {
     id: number;
     nome?: string;
     sobrenome?: string;
+    celular?: string;
   };
   profissionalServicoEntity: {
     id: number;

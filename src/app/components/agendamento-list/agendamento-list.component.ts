@@ -6,6 +6,7 @@ import { FooterComponent } from '../footer/footer.component';
 import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-form.component';
 import { AgendamentoService } from '../../services/agendamento/agendamento.service';
 import { ClienteService } from '../../services/cliente/cliente.service';
+import { NotificacaoService } from '../../services/notificacao.service';
 import { Agendamento } from '../../models/agendamento/agendamento';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -42,11 +43,33 @@ export class AgendamentoListComponent implements OnInit {
     private agendamentoService: AgendamentoService,
     private clienteService: ClienteService,
     private authService: AuthService,
+    private notificacaoService: NotificacaoService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.carregarAgendamentos();
+    this.verificarNotificacoes();
+  }
+
+  verificarNotificacoes() {
+    const cliente = this.authService.getClienteLogado();
+    if (!cliente) return;
+    
+    const notificacoes = this.notificacaoService.obterNotificacoesCliente(cliente.id);
+    
+    if (notificacoes.length > 0) {
+      const mensagens = notificacoes.map(n => n.mensagem).join('\n\n');
+      
+      Swal.fire({
+        title: 'Notificações',
+        text: mensagens,
+        icon: 'info',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        this.notificacaoService.marcarComoLida(cliente.id);
+      });
+    }
   }
 
   carregarAgendamentos() {
