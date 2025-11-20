@@ -211,16 +211,28 @@ voltarEtapa() {
 }
 
 jaCadastrado(telefone: string) {
+  if (!telefone || telefone.length < 10) {
+    this.jaCadastradoNoBanco = false;
+    return;
+  }
+  
+  // Remove formatação do telefone para comparação
+  const telefoneNumeros = telefone.replace(/\D/g, '');
+  
   this.clienteService.listar().subscribe({
     next: (clientes) => {
       console.log('Lista de clientes do banco:', clientes);
       console.log('Telefone buscado:', telefone);
-      const clienteExiste = clientes.some(cliente => cliente.celular === telefone);
+      const clienteExiste = clientes.some(cliente => {
+        const celularNumeros = cliente.celular.replace(/\D/g, '');
+        return celularNumeros === telefoneNumeros;
+      });
       this.jaCadastradoNoBanco = clienteExiste;
       console.log('Cliente já cadastrado:', clienteExiste);
     },
     error: (error) => {
       console.error('Erro ao buscar clientes:', error);
+      this.jaCadastradoNoBanco = false;
     }
   });
 }
@@ -237,51 +249,88 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
     return;
   }
 
-if (this.jaCadastradoNoBanco) {
-  this.clienteService.listar().subscribe({
-    next: (clientes) => {
-      const clienteExistente = clientes.find(cliente => cliente.celular === telefone);
+  const telefoneNumeros = telefone.replace(/\D/g, '');
 
-      if (clienteExistente) {
-        const cliente = {
-          id: clienteExistente.id,
-          nome: clienteExistente.nome,
-          sobrenome: clienteExistente.sobrenome,
-          celular: clienteExistente.celular
-        };
+  if (this.jaCadastradoNoBanco) {
+    this.clienteService.listar().subscribe({
+      next: (clientes) => {
+        const clienteExistente = clientes.find(cliente => {
+          const celularNumeros = cliente.celular.replace(/\D/g, '');
+          return celularNumeros === telefoneNumeros;
+        });
 
-        this.criarServicoEAgendamento(cliente);
+        if (clienteExistente) {
+          this.criarServicoEAgendamento(clienteExistente);
+        } else {
+          Swal.fire({
+            title: 'Cliente não encontrado!',
+            text: 'Erro ao localizar cliente no banco de dados.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Erro ao buscar cliente existente:', error);
+        Swal.fire({
+          title: 'Erro ao buscar cliente!',
+          text: 'Não foi possível verificar os dados do cliente.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
       }
-    },
-    error: (error) => {
-      console.error('Erro ao buscar cliente existente:', error);
-    }
-  });
-} else {
-  const nomeInput = document.getElementById('nomeInput') as HTMLInputElement;
-  const sobrenomeInput = document.getElementById('sobrenomeInput') as HTMLInputElement;
+    });
+  } else {
+    const nomeInput = document.getElementById('nomeInput') as HTMLInputElement;
+    const sobrenomeInput = document.getElementById('sobrenomeInput') as HTMLInputElement;
+    const senhaInput = document.getElementById('SenhaInput') as HTMLInputElement;
 
-  const cliente = {
-    nome: nomeInput?.value,
-    sobrenome: sobrenomeInput?.value,
-    celular: telefone
-  };
-
-  this.clienteService.save(cliente).subscribe({
-    next: (clienteResponse) => {
-      this.criarServicoEAgendamento(clienteResponse);
-    },
-    error: (error) => {
-      console.error('Erro completo do cliente:', error);
+    // Validações para novo cliente
+    if (!nomeInput?.value || !sobrenomeInput?.value || !senhaInput?.value) {
       Swal.fire({
-        title: 'Erro ao criar cliente!',
-        text: `Erro: ${error.status} - ${JSON.stringify(error.error)}`,
-        icon: 'error',
-        confirmButtonText: 'Fechar'
+        title: 'Preencha todos os campos!',
+        text: 'Nome, sobrenome e senha são obrigatórios.',
+        icon: 'warning',
+        confirmButtonText: 'OK'
       });
+      return;
     }
-  });
-}
+
+    const cliente = {
+      nome: nomeInput.value.trim(),
+      sobrenome: sobrenomeInput.value.trim(),
+      celular: telefone,
+      senha: senhaInput.value
+    };
+
+    console.log('Criando novo cliente:', cliente);
+
+    this.clienteService.save(cliente).subscribe({
+      next: (clienteResponse) => {
+        console.log('Cliente criado com sucesso:', clienteResponse);
+        this.criarServicoEAgendamento(clienteResponse);
+      },
+      error: (error) => {
+        console.error('Erro completo do cliente:', error);
+        let mensagemErro = 'Erro desconhecido';
+        
+        if (error.error && typeof error.error === 'string') {
+          mensagemErro = error.error;
+        } else if (error.error && error.error.message) {
+          mensagemErro = error.error.message;
+        } else if (error.message) {
+          mensagemErro = error.message;
+        }
+        
+        Swal.fire({
+          title: 'Erro ao criar cliente!',
+          text: `${mensagemErro}`,
+          icon: 'error',
+          confirmButtonText: 'Fechar'
+        });
+      }
+    });
+  }
 }
 
 
