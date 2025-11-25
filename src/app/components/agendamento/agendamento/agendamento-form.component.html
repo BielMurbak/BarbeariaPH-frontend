@@ -251,6 +251,11 @@ ele muda dinamicamente para parágrafo mais adequado -->
 <label class="form-label" for="typeURL">Digite seu telefone</label> 
 </div>
 
+<div class="form-outline" data-mdb-input-init>
+<input type="password" id="SenhaInput" class="form-control" #SenhaInput/>
+<label class="form-label" for="SenhaInput">Senha</label> 
+</div>
+
 @if(!jaCadastradoNoBanco){
 <div class="form-outline" data-mdb-input-init>
 <input type="text" id="nomeInput" class="form-control" #nomeInput/>
@@ -260,11 +265,6 @@ ele muda dinamicamente para parágrafo mais adequado -->
 <div class="form-outline" data-mdb-input-init>
 <input type="text" id="sobrenomeInput" class="form-control" #sobrenomeInput/>
 <label class="form-label" for="sobrenomeInput">Sobrenome</label> 
-</div>
-
-<div class="form-outline" data-mdb-input-init>
-<input type="password" id="SenhaInput" class="form-control" #SenhaInput/>
-<label class="form-label" for="SenhaInput">Senha</label> 
 </div>
 }
 

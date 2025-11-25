@@ -20,6 +20,7 @@ export class LoginComponent {
   mostrarErro = false;
   mensagemErro = '';
   showModal = false;
+  senha = "";
 
   constructor(
     private router: Router,
@@ -29,9 +30,15 @@ export class LoginComponent {
   ) {}
 
   login() {
-    if (!this.telefone) {
+    if (!this.telefone ) {
       this.mostrarErro = true;
       this.mensagemErro = 'Por favor, informe seu telefone.';
+      return;
+    }
+
+    if(this.senha == null || this.senha.trim() === ""){
+      this.mostrarErro = true;
+      this.mensagemErro = 'Por favor, informe sua senha.';
       return;
     }
     
@@ -48,22 +55,27 @@ export class LoginComponent {
         }
         
         // Não é barbeiro, verifica se é cliente
-        this.clienteService.listar().subscribe({
-          next: (clientes) => {
-            const cliente = clientes.find(c => c.celular === this.telefone);
-            
-            if (cliente) {
-              this.authService.login(cliente);
-              this.router.navigate(['/agendamentos']);
-            } else {
-              this.mostrarErro = true;
-              this.mensagemErro = 'Ops! Parece que você ainda não possui agendamentos conosco. Para acessar sua área, é necessário realizar pelo menos um agendamento primeiro. Clique em "Agendar" abaixo para começar!';
-            }
-          },
-          error: () => {
-            Swal.fire('Erro', 'Erro ao verificar cliente', 'error');
-          }
-        });
+       this.authService.loginJWT(this.telefone, this.senha).subscribe({
+           next: (response) => {
+     // Login bem-sucedido, token recebido
+    localStorage.setItem('token', response.token);
+    
+    // Busca dados completos do cliente
+    this.clienteService.listar().subscribe({
+      next: (clientes) => {
+        const cliente = clientes.find(c => c.celular === this.telefone);
+        if (cliente) {
+          this.authService.login(cliente);
+          this.router.navigate(['/agendamentos']);
+        }
+      }
+    });
+  },
+  error: () => {
+    this.mostrarErro = true;
+    this.mensagemErro = 'Telefone ou senha incorretos!';
+  }
+});
       },
       error: () => {
         Swal.fire('Erro', 'Erro ao verificar dados', 'error');

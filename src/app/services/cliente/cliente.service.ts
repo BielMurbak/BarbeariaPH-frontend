@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Cliente } from '../../models/cliente/cliente';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
@@ -39,6 +39,13 @@ export class ClienteService {
 
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`).pipe(
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  buscarPorTelefoneESenha(telefone: string, senha: string): Observable<any> {
+    const loginData = { celular: telefone, senha: senha };
+    return this.http.post<any>('http://localhost:8080/api/auth/login', loginData).pipe(
       catchError(error => throwError(() => error))
     );
   }

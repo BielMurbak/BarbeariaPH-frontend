@@ -252,29 +252,35 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
   const telefoneNumeros = telefone.replace(/\D/g, '');
 
   if (this.jaCadastradoNoBanco) {
-    this.clienteService.listar().subscribe({
-      next: (clientes) => {
-        const clienteExistente = clientes.find(cliente => {
-          const celularNumeros = cliente.celular.replace(/\D/g, '');
-          return celularNumeros === telefoneNumeros;
-        });
+    const senhaInput = document.getElementById('SenhaInput') as HTMLInputElement;
+    
+    if (!senhaInput?.value) {
+      Swal.fire({
+        title: 'Digite sua senha!',
+        text: 'Para clientes já cadastrados, a senha é obrigatória.',
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
 
-        if (clienteExistente) {
-          this.criarServicoEAgendamento(clienteExistente);
-        } else {
-          Swal.fire({
-            title: 'Cliente não encontrado!',
-            text: 'Erro ao localizar cliente no banco de dados.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
+    this.clienteService.buscarPorTelefoneESenha(telefone, senhaInput.value).subscribe({
+      next: (response) => {
+        // Login bem-sucedido, busca dados completos do cliente
+        this.clienteService.listar().subscribe({
+          next: (clientes) => {
+            const clienteExistente = clientes.find(c => c.celular === telefone);
+            if (clienteExistente) {
+              this.criarServicoEAgendamento(clienteExistente);
+            }
+          }
+        });
       },
       error: (error) => {
         console.error('Erro ao buscar cliente existente:', error);
         Swal.fire({
-          title: 'Erro ao buscar cliente!',
-          text: 'Não foi possível verificar os dados do cliente.',
+          title: 'Dados incorretos!',
+          text: 'Telefone ou senha incorretos.',
           icon: 'error',
           confirmButtonText: 'OK'
         });

@@ -24,6 +24,19 @@
           required>
         <label class="form-label" for="telefone">Telefone</label>
       </div>
+
+      <div class="form-outline mb-4">
+        <input 
+          type="password" 
+          id="senha" 
+          class="form-control" 
+          [(ngModel)]="senha" 
+          name="senha"
+          placeholder="Senha"
+          required>
+        <label class="form-label" for="senha">Senha</label>
+      </div>
+      
       <button type="submit" class="btn btn-primary btn-block mb-4">Entrar</button>
       
       <!-- Alerta de erro -->
