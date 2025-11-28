@@ -213,14 +213,35 @@ export class AgendamentoListComponent implements OnInit {
       return;
     }
     
-    this.agendamentoService.atualizar(this.agendamentoEditando.id, this.agendamentoEditando).subscribe({
+    // Limpar objeto para envio - remover campos que causam problemas de serialização
+    const agendamentoLimpo = {
+      id: this.agendamentoEditando.id,
+      data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local,
+      horario: this.agendamentoEditando.horario,
+      status: this.agendamentoEditando.status,
+      clienteEntity: {
+        id: this.agendamentoEditando.clienteEntity.id
+      },
+      profissionalServicoEntity: {
+        id: this.agendamentoEditando.profissionalServicoEntity.id
+      }
+    };
+    
+    console.log('=== DADOS LIMPOS SENDO ENVIADOS ===');
+    console.log('Agendamento limpo:', JSON.stringify(agendamentoLimpo, null, 2));
+    
+    this.agendamentoService.atualizar(this.agendamentoEditando.id, agendamentoLimpo).subscribe({
       next: () => {
         Swal.fire('Sucesso', 'Agendamento atualizado!', 'success');
         this.cancelarEdicao();
         this.carregarAgendamentos();
       },
       error: (error) => {
-        console.error('Erro ao atualizar:', error);
+        console.error('=== ERRO DETALHADO ===');
+        console.error('Status:', error.status);
+        console.error('Error completo:', error);
+        console.error('Error body:', error.error);
         Swal.fire('Erro', 'Erro ao atualizar agendamento', 'error');
       }
     });

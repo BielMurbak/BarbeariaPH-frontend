@@ -341,81 +341,43 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
 
 
 criarServicoEAgendamento(clienteResponse: any) {
-  // 2. Criar serviço
-  const servico = {
-    descricao: this.servicoSelecionado,
-    minDeDuracao: this.getDuracao(this.servicoSelecionado)
+  // Usar profissional-serviço existente (ID 1 como padrão)
+  const agendamento = {
+    data: this.formatarDataParaISO(),
+    local: "Barbearia PH",
+    horario: this.horarioSelecionado,
+    status: "PENDENTE",
+    clienteEntity: { id: clienteResponse.id! },
+    profissionalServicoEntity: { id: 1 } // Usar ID fixo por enquanto
   };
 
-  this.servicoService.save(servico).subscribe({
-    next: (servicoResponse) => {
-      // 3. Criar profissionalServico
-      const profissionalServico: any = {
-        profissionalEntity: { id: 1 },
-        servicoEntity: { id: servicoResponse.id },
-        preco: parseFloat(this.calcularTotal())
-      };
+  console.log('=== DADOS DO AGENDAMENTO ===');
+  console.log('Data formatada:', this.formatarDataParaISO());
+  console.log('Horário:', this.horarioSelecionado);
+  console.log('Cliente ID:', clienteResponse.id);
+  console.log('Agendamento completo:', agendamento);
 
-      this.profissionalServicoService.save(profissionalServico).subscribe({
-        next: (profissionalServicoResponse) => {
-          // 4. Criar agendamento
-          const agendamento = {
-            data: this.formatarDataParaISO(),
-            local: "Barbearia PH",
-            horario: this.horarioSelecionado,
-            status: "PENDENTE",
-            clienteEntity: { id: clienteResponse.id! },
-            profissionalServicoEntity: { id: profissionalServicoResponse.id! }
-          };
-
-          console.log('=== DADOS DO AGENDAMENTO ===');
-          console.log('Data formatada:', this.formatarDataParaISO());
-          console.log('Horário:', this.horarioSelecionado);
-          console.log('Cliente ID:', clienteResponse.id);
-          console.log('ProfissionalServico ID:', profissionalServicoResponse.id);
-          console.log('Agendamento completo:', agendamento);
-
-          this.agendamentoService.salvar(agendamento).subscribe({
-            next: (response) => {
-              this.authService.login(clienteResponse);
-              Swal.fire({
-                title: 'Agendamento confirmado!',
-                text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
-                icon: 'success',
-                confirmButtonText: 'Ver meus agendamentos'
-              }).then(() => {
-                this.fecharModal();
-                this.router.navigate(['/agendamentos']);
-              });
-            },
-            error: (error) => {
-              console.error('=== ERRO NO AGENDAMENTO ===');
-              console.error('Status:', error.status);
-              console.error('Error completo:', error);
-              console.error('Error body:', error.error);
-              Swal.fire({
-                title: 'Erro ao criar agendamento!',
-                text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
-                icon: 'error',
-                confirmButtonText: 'Fechar'
-              });
-            }
-          });
-        },
-        error: (error) => {
-          Swal.fire({
-            title: 'Erro ao criar profissional/serviço!',
-            text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível PS'}`,
-            icon: 'error',
-            confirmButtonText: 'Fechar'
-          });
-        }
+  this.agendamentoService.salvar(agendamento).subscribe({
+    next: (response) => {
+      this.authService.login(clienteResponse);
+      Swal.fire({
+        title: 'Agendamento confirmado!',
+        text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
+        icon: 'success',
+        confirmButtonText: 'Ver meus agendamentos'
+      }).then(() => {
+        this.fecharModal();
+        this.router.navigate(['/agendamentos']);
       });
     },
     error: (error) => {
+      console.error('=== ERRO NO AGENDAMENTO ===');
+      console.error('Status:', error.status);
+      console.error('Error completo:', error);
+      console.error('Error body:', error.error);
       Swal.fire({
-        title: 'Erro ao criar serviço!',
-        text: `Erro: ${error.status} - ${error.error?.message || 'Servidor indisponível'}`,
+        title: 'Erro ao criar agendamento!',
+        text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
         icon: 'error',
         confirmButtonText: 'Fechar'
       });

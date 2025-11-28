@@ -140,7 +140,22 @@ export class BarbeiroComponent implements OnInit {
       return;
     }
     
-    this.agendamentoService.atualizar(this.agendamentoEditando.id, this.agendamentoEditando).subscribe({
+    // Limpar objeto para envio - remover campos que causam problemas de serialização
+    const agendamentoLimpo = {
+      id: this.agendamentoEditando.id,
+      data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local,
+      horario: this.agendamentoEditando.horario,
+      status: this.agendamentoEditando.status,
+      clienteEntity: {
+        id: this.agendamentoEditando.clienteEntity.id
+      },
+      profissionalServicoEntity: {
+        id: this.agendamentoEditando.profissionalServicoEntity.id
+      }
+    };
+    
+    this.agendamentoService.atualizar(this.agendamentoEditando.id, agendamentoLimpo).subscribe({
       next: () => {
         const clienteId = this.agendamentoEditando!.clienteEntity.id;
         const nomeCliente = this.agendamentoEditando!.clienteEntity.nome || 'Cliente';

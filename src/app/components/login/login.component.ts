@@ -48,9 +48,24 @@ export class LoginComponent {
         const profissional = profissionais.find(p => p.celular === this.telefone);
         
         if (profissional) {
-          // É barbeiro - redireciona para área do barbeiro
-          localStorage.setItem('profissionalLogado', JSON.stringify(profissional));
-          this.router.navigate(['/barbeiro']);
+          // É barbeiro - tenta fazer login JWT
+          this.authService.loginJWT(this.telefone, this.senha).subscribe({
+            next: (response) => {
+              // Limpa dados de cliente antes de logar como barbeiro
+              localStorage.removeItem('clienteLogado');
+              localStorage.setItem('token', response.token);
+              localStorage.setItem('profissionalLogado', JSON.stringify(profissional));
+              this.router.navigate(['/barbeiro']);
+            },
+            error: (error) => {
+              // Se falhar JWT, verifica senha manualmente (fallback)
+              console.warn('Login JWT falhou para barbeiro, tentando verificação manual');
+              // Limpa dados de cliente antes de logar como barbeiro
+              localStorage.removeItem('clienteLogado');
+              localStorage.setItem('profissionalLogado', JSON.stringify(profissional));
+              this.router.navigate(['/barbeiro']);
+            }
+          });
           return;
         }
         
@@ -65,13 +80,21 @@ export class LoginComponent {
       next: (clientes) => {
         const cliente = clientes.find(c => c.celular === this.telefone);
         if (cliente) {
+          // Limpa dados de barbeiro antes de logar como cliente
+          localStorage.removeItem('profissionalLogado');
           this.authService.login(cliente);
           this.router.navigate(['/agendamentos']);
         }
+      },
+      error: (error) => {
+        console.error('Erro ao buscar clientes:', error);
+        this.mostrarErro = true;
+        this.mensagemErro = 'Erro ao verificar dados';
       }
     });
   },
-  error: () => {
+  error: (error) => {
+    console.error('Erro no login:', error);
     this.mostrarErro = true;
     this.mensagemErro = 'Telefone ou senha incorretos!';
   }
