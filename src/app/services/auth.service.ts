@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = 'http://localhost:8080/api';
+  private baseUrl = 'http://3.133.62.14:8080/api';
   private clienteLogadoSubject = new BehaviorSubject<any>(null);
   public clienteLogado$ = this.clienteLogadoSubject.asObservable();
 

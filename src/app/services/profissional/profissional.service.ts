@@ -9,7 +9,7 @@ import { Profissional } from '../../models/profissional/profissional';
 })
 export class ProfissionalService {
 
-  private api = "http://localhost:8080/api/profissionais"
+  private api = "http://3.133.62.14:8080/api/profissionais"
    
   constructor(private http: HttpClient) { }
 

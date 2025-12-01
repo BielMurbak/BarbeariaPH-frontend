@@ -180,7 +180,7 @@ export class AgendamentoListComponent implements OnInit {
         const agendamentoExemplo = agendamentos[0];
         if (agendamentoExemplo) {
           // Fazer requisição para buscar todos os profissional-serviços
-          fetch('http://localhost:8080/api/profissionais/servicos')
+          fetch('http://3.133.62.14:8080/api/profissionais/servicos')
             .then(response => response.json())
             .then((profServicos: any[]) => {
               const profServicoCorreto = profServicos.find(ps => 

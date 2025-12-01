@@ -9,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ClienteService {
 
-  private api = "http://localhost:8080/api/clientes";
+  private api = "http://3.133.62.14:8080/api/clientes";
 
   constructor(private http: HttpClient) { }
 
@@ -45,7 +45,7 @@ export class ClienteService {
 
   buscarPorTelefoneESenha(telefone: string, senha: string): Observable<any> {
     const loginData = { celular: telefone, senha: senha };
-    return this.http.post<any>('http://localhost:8080/api/auth/login', loginData).pipe(
+    return this.http.post<any>('http://3.133.62.14:8080/api/auth/login', loginData).pipe(
       catchError(error => throwError(() => error))
     );
   }

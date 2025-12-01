@@ -116,7 +116,7 @@ export class BarbeiroComponent implements OnInit {
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
     
-    fetch('http://localhost:8080/api/profissionais/servicos')
+    fetch('http://3.133.62.14:8080/api/profissionais/servicos')
       .then(response => response.json())
       .then((profServicos: any[]) => {
         const profServicoCorreto = profServicos.find(ps => 
