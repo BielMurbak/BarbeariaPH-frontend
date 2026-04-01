@@ -70,9 +70,8 @@ top:1em;
   color: rgb(0, 0, 0);
   padding: 15px 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  justify-content:space-between;
   
 }
 
@@ -206,13 +205,51 @@ top:1em;
   }
 }
 
-.form-outline{
-  display:flex;
-  border:1px solid rgb(0, 0, 0);
- align-items: center;
- flex-direction: column;
- width: 80%;
-   margin-top: 2em;
+.form-outline {
+  position: relative;
+  margin-bottom: 20px;
+  width: 80%;
+}
+
+.form-outline input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-outline input:focus {
+  border-color: #BC9E5F;
+  box-shadow: 0 0 0 3px rgba(188, 158, 95, 0.1);
+}
+
+.form-outline label {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  background: white;
+  padding: 0 8px;
+  color: #666;
+  font-size: 16px;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.form-outline input:focus + label,
+.form-outline input:not(:placeholder-shown) + label {
+  top: 0;
+  font-size: 14px;
+  color: #BC9E5F;
+  font-weight: 500;
+}
+
+.form-outline input::placeholder {
+  color: transparent;
 }
 
 .box-button{
@@ -277,30 +314,32 @@ padding:10px;
   flex-direction: column;
   align-items: center;
   padding: 12px 0 8px 0;
-  border-top: 2px solid #007bff;
+  border-top: 2px solid #BC9E5F;
   margin-top: 10px;
   font-weight: bold;
 }
 
 .resumo-label {
   font-size: 12px;
-  color: #666;
+  color: #333;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .resumo-value {
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
   text-align: right;
   max-width: 180px;
   word-wrap: break-word;
 }
 
 .resumo-total .resumo-value {
-  color: #007bff;
-  font-size: 16px;
+  color: #BC9E5F;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(188, 158, 95, 0.3);
 }
 
 /* Media Queries para Responsividade */
@@ -427,3 +466,34 @@ padding:10px;
   background: #555;
 }
 
+.modal-agendamento-left-low {
+  padding: 15px 20px;
+  background: rgba(188, 158, 95, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(188, 158, 95, 0.3);
+}
+
+.modal-agendamento-left-low p {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.modal-agendamento-left-low a {
+  color: #BC9E5F;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: 2px solid #BC9E5F;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.modal-agendamento-left-low a:hover {
+  background: #BC9E5F;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(188, 158, 95, 0.3);
+}

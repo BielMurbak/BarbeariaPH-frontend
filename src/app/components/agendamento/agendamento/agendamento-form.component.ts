@@ -271,7 +271,7 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
           next: (clientes) => {
             const clienteExistente = clientes.find(c => c.celular === telefone);
             if (clienteExistente) {
-              this.criarServicoEAgendamento(clienteExistente);
+              this.criarAgendamento(clienteExistente);
             }
           }
         });
@@ -287,68 +287,103 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
       }
     });
   } else {
-    const nomeInput = document.getElementById('nomeInput') as HTMLInputElement;
-    const sobrenomeInput = document.getElementById('sobrenomeInput') as HTMLInputElement;
-    const senhaInput = document.getElementById('SenhaInput') as HTMLInputElement;
-
-    // Validações para novo cliente
-    if (!nomeInput?.value || !sobrenomeInput?.value || !senhaInput?.value) {
-      Swal.fire({
-        title: 'Preencha todos os campos!',
-        text: 'Nome, sobrenome e senha são obrigatórios.',
-        icon: 'warning',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    const cliente = {
-      nome: nomeInput.value.trim(),
-      sobrenome: sobrenomeInput.value.trim(),
-      celular: telefone,
-      senha: senhaInput.value
-    };
-
-    console.log('Criando novo cliente:', cliente);
-
-    this.clienteService.save(cliente).subscribe({
-      next: (clienteResponse) => {
-        console.log('Cliente criado com sucesso:', clienteResponse);
-        this.criarServicoEAgendamento(clienteResponse);
-      },
-      error: (error) => {
-        console.error('Erro completo do cliente:', error);
-        let mensagemErro = 'Erro desconhecido';
-        
-        if (error.error && typeof error.error === 'string') {
-          mensagemErro = error.error;
-        } else if (error.error && error.error.message) {
-          mensagemErro = error.error.message;
-        } else if (error.message) {
-          mensagemErro = error.message;
-        }
-        
-        Swal.fire({
-          title: 'Erro ao criar cliente!',
-          text: `${mensagemErro}`,
-          icon: 'error',
-          confirmButtonText: 'Fechar'
-        });
-      }
-    });
+    // Primeiro valida se consegue criar o agendamento (sem criar o cliente ainda)
+    this.validarECriarNovoCliente(telefone);
   }
 }
 
+validarECriarNovoCliente(telefone: string) {
+  const nomeInput = document.getElementById('nomeInput') as HTMLInputElement;
+  const sobrenomeInput = document.getElementById('sobrenomeInput') as HTMLInputElement;
+  const senhaInput = document.getElementById('SenhaInput') as HTMLInputElement;
 
-criarServicoEAgendamento(clienteResponse: any) {
-  // Usar profissional-serviço existente (ID 1 como padrão)
+  // Validações para novo cliente
+  if (!nomeInput?.value || !sobrenomeInput?.value || !senhaInput?.value) {
+    Swal.fire({
+      title: 'Preencha todos os campos!',
+      text: 'Nome, sobrenome e senha são obrigatórios.',
+      icon: 'warning',
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+
+  // Verifica se já existe cliente com esse telefone (dupla verificação)
+  this.clienteService.listar().subscribe({
+    next: (clientes) => {
+      const telefoneNumeros = telefone.replace(/\D/g, '');
+      const clienteExiste = clientes.some(cliente => {
+        const celularNumeros = cliente.celular.replace(/\D/g, '');
+        return celularNumeros === telefoneNumeros;
+      });
+      
+      if (clienteExiste) {
+        Swal.fire({
+          title: 'Cliente já cadastrado!',
+          text: 'Este telefone já está cadastrado. Use a opção de login.',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+      
+      // Se não existe, cria o cliente
+      const cliente = {
+        nome: nomeInput.value.trim(),
+        sobrenome: sobrenomeInput.value.trim(),
+        celular: telefone,
+        senha: senhaInput.value
+      };
+
+      console.log('Criando novo cliente:', cliente);
+
+      this.clienteService.save(cliente).subscribe({
+        next: (clienteResponse) => {
+          console.log('Cliente criado com sucesso:', clienteResponse);
+          this.criarAgendamento(clienteResponse);
+        },
+        error: (error) => {
+          console.error('Erro completo do cliente:', error);
+          let mensagemErro = 'Erro desconhecido';
+          
+          if (error.error && typeof error.error === 'string') {
+            mensagemErro = error.error;
+          } else if (error.error && error.error.message) {
+            mensagemErro = error.error.message;
+          } else if (error.message) {
+            mensagemErro = error.message;
+          }
+          
+          Swal.fire({
+            title: 'Erro ao criar cliente!',
+            text: `${mensagemErro}`,
+            icon: 'error',
+            confirmButtonText: 'Fechar'
+          });
+        }
+      });
+    },
+    error: (error) => {
+      console.error('Erro ao verificar clientes existentes:', error);
+      Swal.fire({
+        title: 'Erro de conexão!',
+        text: 'Não foi possível verificar os dados. Tente novamente.',
+        icon: 'error',
+        confirmButtonText: 'Fechar'
+      });
+    }
+  });
+}
+
+
+criarAgendamento(clienteResponse: any) {
   const agendamento = {
     data: this.formatarDataParaISO(),
     local: "Barbearia PH",
     horario: this.horarioSelecionado,
     status: "PENDENTE",
     clienteEntity: { id: clienteResponse.id! },
-    profissionalServicoEntity: { id: 1 } // Usar ID fixo por enquanto
+    profissionalServicoEntity: { id: 9 } // Usar ID 9 que existe no banco
   };
 
   console.log('=== DADOS DO AGENDAMENTO ===');
@@ -375,6 +410,16 @@ criarServicoEAgendamento(clienteResponse: any) {
       console.error('Status:', error.status);
       console.error('Error completo:', error);
       console.error('Error body:', error.error);
+      
+      // Se o agendamento falhou E o cliente foi recém criado, tenta deletar o cliente
+      if (!this.jaCadastradoNoBanco && clienteResponse.id) {
+        console.log('Tentando deletar cliente recém criado devido ao erro no agendamento...');
+        this.clienteService.deletar(clienteResponse.id).subscribe({
+          next: () => console.log('Cliente deletado com sucesso após erro no agendamento'),
+          error: (deleteError) => console.error('Erro ao deletar cliente:', deleteError)
+        });
+      }
+      
       Swal.fire({
         title: 'Erro ao criar agendamento!',
         text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,

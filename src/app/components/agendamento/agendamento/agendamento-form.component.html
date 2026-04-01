@@ -246,24 +246,24 @@ ele muda dinamicamente para parágrafo mais adequado -->
 
 @if (etapaAtual === 'telefone') {
 <div class="modal-agendamento-mid">
-<div class="form-outline" data-mdb-input-init>
-<input type="tel" id="typeURL" class="form-control" placeholder="(__) _____-____" #telefoneInput (input)="formatarTelefone($event); jaCadastrado(telefoneInput.value)" />
-<label class="form-label" for="typeURL">Digite seu telefone</label> 
+<div class="form-outline">
+<input type="tel" id="telefoneInput" class="form-control" placeholder=" " #telefoneInput (input)="formatarTelefone($event); jaCadastrado(telefoneInput.value)" />
+<label class="form-label" for="telefoneInput">Digite seu telefone</label> 
 </div>
 
-<div class="form-outline" data-mdb-input-init>
-<input type="password" id="SenhaInput" class="form-control" #SenhaInput/>
+<div class="form-outline">
+<input type="password" id="SenhaInput" class="form-control" placeholder=" " #SenhaInput/>
 <label class="form-label" for="SenhaInput">Senha</label> 
 </div>
 
 @if(!jaCadastradoNoBanco){
-<div class="form-outline" data-mdb-input-init>
-<input type="text" id="nomeInput" class="form-control" #nomeInput/>
-<label class="form-label" for="nomeInput">Digite seu Nome </label> 
+<div class="form-outline">
+<input type="text" id="nomeInput" class="form-control" placeholder=" " #nomeInput/>
+<label class="form-label" for="nomeInput">Digite seu Nome</label> 
 </div>
 
-<div class="form-outline" data-mdb-input-init>
-<input type="text" id="sobrenomeInput" class="form-control" #sobrenomeInput/>
+<div class="form-outline">
+<input type="text" id="sobrenomeInput" class="form-control" placeholder=" " #sobrenomeInput/>
 <label class="form-label" for="sobrenomeInput">Sobrenome</label> 
 </div>
 }
