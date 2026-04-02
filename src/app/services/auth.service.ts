@@ -11,9 +11,30 @@ export class AuthService {
   public clienteLogado$ = this.clienteLogadoSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    // Limpa tokens inválidos após mudança de secret key
+    this.clearInvalidTokens();
+    
     const clienteSalvo = localStorage.getItem('clienteLogado');
     if (clienteSalvo) {
       this.clienteLogadoSubject.next(JSON.parse(clienteSalvo));
+    }
+  }
+
+  private clearInvalidTokens() {
+    // Remove tokens que podem estar inválidos
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        // Tenta decodificar o token para ver se é válido
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Date.now() / 1000;
+        if (payload.exp < now) {
+          this.logout();
+        }
+      } catch (error) {
+        // Token inválido, limpa tudo
+        this.logout();
+      }
     }
   }
 

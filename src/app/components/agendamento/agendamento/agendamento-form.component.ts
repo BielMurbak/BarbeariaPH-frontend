@@ -377,52 +377,121 @@ validarECriarNovoCliente(telefone: string) {
 
 
 criarAgendamento(clienteResponse: any) {
-  const agendamento = {
-    data: this.formatarDataParaISO(),
-    local: "Barbearia PH",
-    horario: this.horarioSelecionado,
-    status: "PENDENTE",
-    clienteEntity: { id: clienteResponse.id! },
-    profissionalServicoEntity: { id: 9 } // Usar ID 9 que existe no banco
-  };
+  // Primeiro busca um ProfissionalServico válido
+  this.profissionalServicoService.listar().subscribe({
+    next: (profissionalServicos) => {
+      if (profissionalServicos.length === 0) {
+        Swal.fire({
+          title: 'Erro!',
+          text: 'Nenhum serviço disponível no momento.',
+          icon: 'error',
+          confirmButtonText: 'Fechar'
+        });
+        return;
+      }
+      
+      // Busca o ProfissionalServico baseado no serviço selecionado
+      let profissionalServicoEncontrado = profissionalServicos.find(ps => 
+        ps.servicoEntity?.descricao === this.servicoSelecionado
+      );
+      
+      // Se não encontrou o serviço principal, usa o primeiro disponível como fallback
+      if (!profissionalServicoEncontrado) {
+        console.warn(`Serviço '${this.servicoSelecionado}' não encontrado, usando fallback`);
+        profissionalServicoEncontrado = profissionalServicos[0];
+      }
+      
+      // Monta string completa com serviço principal + adicionais
+      let servicoCompleto = this.servicoSelecionado;
+      if (this.servicosAdicionaisSelecionados.length > 0) {
+        servicoCompleto += ' + ' + this.servicosAdicionaisSelecionados.join(', ');
+      }
+      
+      // Calcula preço total (principal + adicionais)
+      let precoTotal = profissionalServicoEncontrado.preco || 0;
+      
+      // Soma preços dos serviços adicionais
+      this.servicosAdicionaisSelecionados.forEach(servicoAdicional => {
+        const servicoAdicionalEncontrado = profissionalServicos.find(ps => 
+          ps.servicoEntity?.descricao === servicoAdicional || 
+          ps.servicoEntity?.descricao === 'Sobracelha' && servicoAdicional === 'Sobracelha'
+        );
+        if (servicoAdicionalEncontrado) {
+          precoTotal += servicoAdicionalEncontrado.preco || 0;
+        }
+      });
+      
+      const profissionalServicoId = profissionalServicoEncontrado.id!;
+      
+      const agendamento = {
+        data: this.formatarDataParaISO(),
+        local: "Barbearia PH",
+        horario: this.horarioSelecionado,
+        status: "PENDENTE",
+        observacoes: servicoCompleto, // String completa com todos os serviços
+        preco: precoTotal, // Preço total calculado
+        clienteEntity: { id: clienteResponse.id! },
+        profissionalServicoEntity: { id: profissionalServicoId }
+      };
 
-  console.log('=== DADOS DO AGENDAMENTO ===');
-  console.log('Data formatada:', this.formatarDataParaISO());
-  console.log('Horário:', this.horarioSelecionado);
-  console.log('Cliente ID:', clienteResponse.id);
-  console.log('Agendamento completo:', agendamento);
+      console.log('=== DADOS DO AGENDAMENTO ===');
+      console.log('Serviço selecionado:', this.servicoSelecionado);
+      console.log('Serviços adicionais:', this.servicosAdicionaisSelecionados);
+      console.log('Serviço completo:', servicoCompleto);
+      console.log('Preço total:', precoTotal);
+      console.log('Data formatada:', this.formatarDataParaISO());
+      console.log('Horário:', this.horarioSelecionado);
+      console.log('Cliente ID:', clienteResponse.id);
+      console.log('ProfissionalServico ID:', profissionalServicoId);
+      console.log('ProfissionalServico encontrado:', profissionalServicoEncontrado);
+      console.log('Agendamento completo:', agendamento);
 
-  this.agendamentoService.salvar(agendamento).subscribe({
-    next: (response) => {
-      this.authService.login(clienteResponse);
-      Swal.fire({
-        title: 'Agendamento confirmado!',
-        text: `${this.servicoSelecionado} em ${this.dataSelecionada} às ${this.horarioSelecionado}`,
-        icon: 'success',
-        confirmButtonText: 'Ver meus agendamentos'
-      }).then(() => {
-        this.fecharModal();
-        this.router.navigate(['/agendamentos']);
+      this.agendamentoService.salvar(agendamento).subscribe({
+        next: (response) => {
+          this.authService.login(clienteResponse);
+          
+          // Monta mensagem com serviço principal + adicionais
+          let mensagemServicos = servicoCompleto;
+          
+          Swal.fire({
+            title: 'Agendamento confirmado!',
+            text: `${mensagemServicos} em ${this.dataSelecionada} às ${this.horarioSelecionado} - Total: R$ ${precoTotal.toFixed(2)}`,
+            icon: 'success',
+            confirmButtonText: 'Ver meus agendamentos'
+          }).then(() => {
+            this.fecharModal();
+            this.router.navigate(['/agendamentos']);
+          });
+        },
+        error: (error) => {
+          console.error('=== ERRO NO AGENDAMENTO ===');
+          console.error('Status:', error.status);
+          console.error('Error completo:', error);
+          console.error('Error body:', error.error);
+          
+          // Se o agendamento falhou E o cliente foi recém criado, tenta deletar o cliente
+          if (!this.jaCadastradoNoBanco && clienteResponse.id) {
+            console.log('Tentando deletar cliente recém criado devido ao erro no agendamento...');
+            this.clienteService.deletar(clienteResponse.id).subscribe({
+              next: () => console.log('Cliente deletado com sucesso após erro no agendamento'),
+              error: (deleteError) => console.error('Erro ao deletar cliente:', deleteError)
+            });
+          }
+          
+          Swal.fire({
+            title: 'Erro ao criar agendamento!',
+            text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
+            icon: 'error',
+            confirmButtonText: 'Fechar'
+          });
+        }
       });
     },
     error: (error) => {
-      console.error('=== ERRO NO AGENDAMENTO ===');
-      console.error('Status:', error.status);
-      console.error('Error completo:', error);
-      console.error('Error body:', error.error);
-      
-      // Se o agendamento falhou E o cliente foi recém criado, tenta deletar o cliente
-      if (!this.jaCadastradoNoBanco && clienteResponse.id) {
-        console.log('Tentando deletar cliente recém criado devido ao erro no agendamento...');
-        this.clienteService.deletar(clienteResponse.id).subscribe({
-          next: () => console.log('Cliente deletado com sucesso após erro no agendamento'),
-          error: (deleteError) => console.error('Erro ao deletar cliente:', deleteError)
-        });
-      }
-      
+      console.error('Erro ao buscar ProfissionalServicos:', error);
       Swal.fire({
-        title: 'Erro ao criar agendamento!',
-        text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
+        title: 'Erro!',
+        text: 'Não foi possível carregar os serviços disponíveis.',
         icon: 'error',
         confirmButtonText: 'Fechar'
       });
