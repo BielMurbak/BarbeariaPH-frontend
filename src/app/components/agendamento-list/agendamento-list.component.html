@@ -60,12 +60,12 @@
           @for (agendamento of agendamentos; track agendamento.id) {
           <tr>
             <td>{{ agendamento.clienteEntity.nome || 'N/A' }} {{ agendamento.clienteEntity.sobrenome || '' }}</td>
-            <td>{{ agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
+            <td>{{ agendamento.observacoes || agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
             <td>{{ agendamento.data }}</td>
             <td>{{ agendamento.horario }}</td>
             <td>{{ agendamento.local }}</td>
             <td>{{ agendamento.profissionalServicoEntity.profissionalEntity?.nome || 'N/A' }}</td>
-            <td>R$ {{ agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
+            <td>R$ {{ agendamento.preco.toFixed(2) || agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
             <td>{{ agendamento.status }}</td>
             <td>
               <div class="actions-column">
@@ -144,12 +144,12 @@
           @for (agendamento of getHistorico(); track agendamento.id) {
           <tr>
             <td>{{ agendamento.clienteEntity.nome || 'N/A' }} {{ agendamento.clienteEntity.sobrenome || '' }}</td>
-            <td>{{ agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
+            <td>{{ agendamento.observacoes || agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
             <td>{{ agendamento.data }}</td>
             <td>{{ agendamento.horario }}</td>
             <td>{{ agendamento.local }}</td>
             <td>{{ agendamento.profissionalServicoEntity.profissionalEntity?.nome || 'N/A' }}</td>
-            <td>R$ {{ agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
+            <td>R$ {{ agendamento.preco.toFixed(2) || agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
             <td>
               <span class="badge" [class.bg-success]="agendamento.status === 'CONCLUIDO'" [class.bg-danger]="agendamento.status === 'CANCELADO'">{{ agendamento.status }}</span>
             </td>

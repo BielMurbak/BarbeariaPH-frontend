@@ -45,9 +45,20 @@ export class AuthService {
     });
   }
 
-  login(cliente: any) {
-    localStorage.setItem('clienteLogado', JSON.stringify(cliente));
-    this.clienteLogadoSubject.next(cliente);
+  login(cliente: any, token?: string) {
+    // Remove dados sensíveis antes de armazenar
+    const clienteSanitizado = {
+      id: cliente.id,
+      nome: cliente.nome,
+      sobrenome: cliente.sobrenome,
+      celular: cliente.celular
+      // Não armazena senha ou outros dados sensíveis
+    };
+    localStorage.setItem('clienteLogado', JSON.stringify(clienteSanitizado));
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+    this.clienteLogadoSubject.next(clienteSanitizado);
   }
 
   logout() {

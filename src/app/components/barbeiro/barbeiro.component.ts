@@ -147,6 +147,8 @@ export class BarbeiroComponent implements OnInit {
       local: this.agendamentoEditando.local,
       horario: this.agendamentoEditando.horario,
       status: this.agendamentoEditando.status,
+      observacoes: this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '',
+      preco: this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0,
       clienteEntity: {
         id: this.agendamentoEditando.clienteEntity.id
       },

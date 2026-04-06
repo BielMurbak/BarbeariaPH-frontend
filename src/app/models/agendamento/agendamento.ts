@@ -4,6 +4,8 @@ export interface Agendamento {
   local: string;
   horario: string;
   status?: string;
+  observacoes: string; // Serviços completos
+  preco: number; // Preço total
   clienteEntity: {
     id: number;
     nome?: string;

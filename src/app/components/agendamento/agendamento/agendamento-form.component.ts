@@ -5,8 +5,6 @@ import Swal from 'sweetalert2';
 
 import { AgendamentoService } from '../../../services/agendamento/agendamento.service';
 import { ClienteService } from '../../../services/cliente/cliente.service';
-import { ProfissionalService } from '../../../services/profissional/profissional.service';
-import { ServicoService } from '../../../services/servico/servico.service';
 import { ProfissionalservicoService } from '../../../services/profissionalservico/profissionalservico.service';
 import { AuthService } from '../../../services/auth.service';
 import { Agendamento } from '../../../models/agendamento/agendamento';
@@ -24,8 +22,6 @@ export class AgendamentoComponent implements OnInit {
 constructor(
   private agendamentoService: AgendamentoService,
   private clienteService: ClienteService,
-  private profissionalService: ProfissionalService,
-  private servicoService: ServicoService,
   private profissionalServicoService: ProfissionalservicoService,
   private authService: AuthService,
   private router: Router
@@ -47,6 +43,8 @@ resumo : boolean = false;
 jaCadastradoNoBanco : boolean = false;
 
 servicosAdicionaisSelecionados: string[] = []; 
+precoTotalCalculado: number = 0; // Armazena o preço calculado da API
+profissionalServicos: any[] = []; // Cache dos serviços da API 
 
 dataAtual = new Date();                    
 mesAtual = this.dataAtual.toLocaleString('pt-BR', { month: 'long' }); 
@@ -67,21 +65,33 @@ horariosMarcados: string[] = [];
 
 buscarHorariosMarcados() {
   const dataFormatada = this.formatarDataParaISO();
+  
   this.agendamentoService.listar().subscribe({
     next: (agendamentos) => {
-      const agendamentosHoje = agendamentos.filter(item => item.data === dataFormatada);
+      // Filtra agendamentos da data selecionada com status PENDENTE
+      const agendamentosNaData = agendamentos.filter(item => 
+        item.data === dataFormatada && 
+        item.status === 'PENDENTE'
+      );
+      
       this.horariosMarcados = [];
       
-      agendamentosHoje.forEach(agendamento => {
+      agendamentosNaData.forEach(agendamento => {
+        // Adiciona o horário exato do agendamento
+        this.horariosMarcados.push(agendamento.horario);
+        
+        // Calcula horários ocupados baseado na duração do serviço
         const duracao = (agendamento as any).profissionalServicoEntity?.servicoEntity?.minDeDuracao || 60;
         const horariosOcupados = this.calcularHorariosOcupados(agendamento.horario, duracao);
         this.horariosMarcados.push(...horariosOcupados);
       });
       
+      // Remove duplicatas
+      this.horariosMarcados = [...new Set(this.horariosMarcados)];
+      
       this.etapaAtual = 'horario';
     },
     error: (error) => {
-      console.error('Erro ao buscar horários:', error);
       this.horariosMarcados = [];
       this.etapaAtual = 'horario';
     }
@@ -93,7 +103,12 @@ calcularHorariosOcupados(horarioInicio: string, duracao: number): string[] {
   const [hora, minuto] = horarioInicio.split(':').map(Number);
   let totalMinutos = hora * 60 + minuto;
   
-  for (let i = 0; i < duracao; i += 30) {
+  // Adiciona o horário inicial
+  horariosOcupados.push(horarioInicio);
+  
+  // Calcula os horários seguintes baseado na duração
+  for (let i = 30; i < duracao; i += 30) {
+    totalMinutos += 30;
     const h = Math.floor(totalMinutos / 60);
     const m = totalMinutos % 60;
     const horarioFormatado = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
@@ -101,8 +116,6 @@ calcularHorariosOcupados(horarioInicio: string, duracao: number): string[] {
     if (this.todosHorarios.includes(horarioFormatado)) {
       horariosOcupados.push(horarioFormatado);
     }
-    
-    totalMinutos += 30;
   }
   
   return horariosOcupados;
@@ -156,6 +169,7 @@ selecionarCombo(combo: string) {
   this.servicoSelecionado = combo;
   this.mostrarCombos = false;
   this.resumo = true;
+  this.atualizarPrecoTotal(); // Atualiza preço
   this.etapaAtual = 'profissional';
 }
 
@@ -163,6 +177,7 @@ selecionarCorte(corte: string) {
   this.servicoSelecionado = corte;
   this.mostrarTipoCorte = false;
   this.resumo = true;
+  this.atualizarPrecoTotal(); // Atualiza preço
   this.mostrarServicosAdicionais = true;
 }
 
@@ -173,7 +188,7 @@ selecionarServicosAdicionais(servico: string) {
   } else {
     this.servicosAdicionaisSelecionados.push(servico);
   }
-
+  this.atualizarPrecoTotal(); // Atualiza preço quando adiciona/remove serviços
 }
 
 continuarServicosAdicionais() {
@@ -221,17 +236,13 @@ jaCadastrado(telefone: string) {
   
   this.clienteService.listar().subscribe({
     next: (clientes) => {
-      console.log('Lista de clientes do banco:', clientes);
-      console.log('Telefone buscado:', telefone);
       const clienteExiste = clientes.some(cliente => {
         const celularNumeros = cliente.celular.replace(/\D/g, '');
         return celularNumeros === telefoneNumeros;
       });
       this.jaCadastradoNoBanco = clienteExiste;
-      console.log('Cliente já cadastrado:', clienteExiste);
     },
     error: (error) => {
-      console.error('Erro ao buscar clientes:', error);
       this.jaCadastradoNoBanco = false;
     }
   });
@@ -277,7 +288,6 @@ finalizarAgendamento(telefoneInput: HTMLInputElement) {
         });
       },
       error: (error) => {
-        console.error('Erro ao buscar cliente existente:', error);
         Swal.fire({
           title: 'Dados incorretos!',
           text: 'Telefone ou senha incorretos.',
@@ -335,15 +345,13 @@ validarECriarNovoCliente(telefone: string) {
         senha: senhaInput.value
       };
 
-      console.log('Criando novo cliente:', cliente);
+
 
       this.clienteService.save(cliente).subscribe({
         next: (clienteResponse) => {
-          console.log('Cliente criado com sucesso:', clienteResponse);
           this.criarAgendamento(clienteResponse);
         },
         error: (error) => {
-          console.error('Erro completo do cliente:', error);
           let mensagemErro = 'Erro desconhecido';
           
           if (error.error && typeof error.error === 'string') {
@@ -364,7 +372,6 @@ validarECriarNovoCliente(telefone: string) {
       });
     },
     error: (error) => {
-      console.error('Erro ao verificar clientes existentes:', error);
       Swal.fire({
         title: 'Erro de conexão!',
         text: 'Não foi possível verificar os dados. Tente novamente.',
@@ -397,7 +404,6 @@ criarAgendamento(clienteResponse: any) {
       
       // Se não encontrou o serviço principal, usa o primeiro disponível como fallback
       if (!profissionalServicoEncontrado) {
-        console.warn(`Serviço '${this.servicoSelecionado}' não encontrado, usando fallback`);
         profissionalServicoEncontrado = profissionalServicos[0];
       }
       
@@ -412,14 +418,23 @@ criarAgendamento(clienteResponse: any) {
       
       // Soma preços dos serviços adicionais
       this.servicosAdicionaisSelecionados.forEach(servicoAdicional => {
+        // Normaliza o nome para buscar corretamente
+        let nomeParaBuscar = servicoAdicional;
+        if (servicoAdicional === 'Sobracelha') {
+          nomeParaBuscar = 'Sobrancelha'; // Corrige inconsistência
+        }
+        
         const servicoAdicionalEncontrado = profissionalServicos.find(ps => 
-          ps.servicoEntity?.descricao === servicoAdicional || 
-          ps.servicoEntity?.descricao === 'Sobracelha' && servicoAdicional === 'Sobracelha'
+          ps.servicoEntity?.descricao === nomeParaBuscar
         );
+        
         if (servicoAdicionalEncontrado) {
           precoTotal += servicoAdicionalEncontrado.preco || 0;
         }
       });
+      
+      // Atualiza o preço total para o resumo
+      this.precoTotalCalculado = precoTotal;
       
       const profissionalServicoId = profissionalServicoEncontrado.id!;
       
@@ -433,18 +448,6 @@ criarAgendamento(clienteResponse: any) {
         clienteEntity: { id: clienteResponse.id! },
         profissionalServicoEntity: { id: profissionalServicoId }
       };
-
-      console.log('=== DADOS DO AGENDAMENTO ===');
-      console.log('Serviço selecionado:', this.servicoSelecionado);
-      console.log('Serviços adicionais:', this.servicosAdicionaisSelecionados);
-      console.log('Serviço completo:', servicoCompleto);
-      console.log('Preço total:', precoTotal);
-      console.log('Data formatada:', this.formatarDataParaISO());
-      console.log('Horário:', this.horarioSelecionado);
-      console.log('Cliente ID:', clienteResponse.id);
-      console.log('ProfissionalServico ID:', profissionalServicoId);
-      console.log('ProfissionalServico encontrado:', profissionalServicoEncontrado);
-      console.log('Agendamento completo:', agendamento);
 
       this.agendamentoService.salvar(agendamento).subscribe({
         next: (response) => {
@@ -464,23 +467,14 @@ criarAgendamento(clienteResponse: any) {
           });
         },
         error: (error) => {
-          console.error('=== ERRO NO AGENDAMENTO ===');
-          console.error('Status:', error.status);
-          console.error('Error completo:', error);
-          console.error('Error body:', error.error);
-          
           // Se o agendamento falhou E o cliente foi recém criado, tenta deletar o cliente
           if (!this.jaCadastradoNoBanco && clienteResponse.id) {
-            console.log('Tentando deletar cliente recém criado devido ao erro no agendamento...');
-            this.clienteService.deletar(clienteResponse.id).subscribe({
-              next: () => console.log('Cliente deletado com sucesso após erro no agendamento'),
-              error: (deleteError) => console.error('Erro ao deletar cliente:', deleteError)
-            });
+            this.clienteService.deletar(clienteResponse.id).subscribe();
           }
           
           Swal.fire({
             title: 'Erro ao criar agendamento!',
-            text: `Erro: ${error.status} - ${error.error?.message || JSON.stringify(error.error) || 'Servidor indisponível'}`,
+            text: 'Não foi possível criar o agendamento. Tente novamente.',
             icon: 'error',
             confirmButtonText: 'Fechar'
           });
@@ -488,7 +482,6 @@ criarAgendamento(clienteResponse: any) {
       });
     },
     error: (error) => {
-      console.error('Erro ao buscar ProfissionalServicos:', error);
       Swal.fire({
         title: 'Erro!',
         text: 'Não foi possível carregar os serviços disponíveis.',
@@ -501,6 +494,48 @@ criarAgendamento(clienteResponse: any) {
 
 ngOnInit() {
   this.gerarCalendario();
+  // Carrega os preços dos serviços para cálculo em tempo real
+  this.carregarPrecosServicos();
+}
+
+carregarPrecosServicos() {
+  this.profissionalServicoService.listar().subscribe({
+    next: (profissionalServicos) => {
+      this.profissionalServicos = profissionalServicos;
+      this.atualizarPrecoTotal();
+    },
+    error: (error) => {
+      // Silencioso - não é crítico se falhar
+    }
+  });
+}
+
+atualizarPrecoTotal() {
+  if (!this.profissionalServicos || this.profissionalServicos.length === 0) {
+    return;
+  }
+  
+  let total = 0;
+  
+  // Preço do serviço principal
+  const servicoPrincipal = this.profissionalServicos.find(ps => 
+    ps.servicoEntity?.descricao === this.servicoSelecionado
+  );
+  if (servicoPrincipal) {
+    total += servicoPrincipal.preco || 0;
+  }
+  
+  // Preços dos serviços adicionais
+  this.servicosAdicionaisSelecionados.forEach(servicoAdicional => {
+    const servicoEncontrado = this.profissionalServicos.find(ps => 
+      ps.servicoEntity?.descricao === servicoAdicional
+    );
+    if (servicoEncontrado) {
+      total += servicoEncontrado.preco || 0;
+    }
+  });
+  
+  this.precoTotalCalculado = total;
 }
 
 gerarCalendario() {
@@ -588,12 +623,10 @@ isDomingo(dia: number): boolean {
 
 formatarDataParaISO(): string {
   if (!this.dataSelecionada) {
-    console.error('Data não selecionada!');
     return '';
   }
   const [dia, mes, ano] = this.dataSelecionada.split('/');
   const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-  console.log('Data original:', this.dataSelecionada, 'Data formatada:', dataFormatada);
   return dataFormatada;
 }
 
@@ -620,6 +653,12 @@ getDuracao(servico: string): number {
 }
 
 calcularTotal(): string {
+  // Se já temos os dados da API, usa os preços reais
+  if (this.precoTotalCalculado > 0) {
+    return this.precoTotalCalculado.toFixed(2);
+  }
+  
+  // Fallback para preços hardcoded (caso não tenha carregado da API ainda)
   let total = 0;
   
   if (this.servicoSelecionado.includes('Cabelo e barba')) total += 60;
@@ -633,7 +672,7 @@ calcularTotal(): string {
   
   this.servicosAdicionaisSelecionados.forEach(servico => {
     if (servico === 'Barba') total += 35;
-    if (servico === 'Sobracelha') total += 10;
+    if (servico === 'Sobrancelha') total += 10;
   });
   
   return total.toFixed(2);
