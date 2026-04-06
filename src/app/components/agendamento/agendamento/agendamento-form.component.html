@@ -236,6 +236,8 @@ ele muda dinamicamente para parágrafo mais adequado -->
 @if (!horariosMarcados.includes(horario)) {
 <button type="button" 
         class="modal-agendamento-servicos-container" 
+        [class.horario-passado]="horarioJaPassou(horario)"
+        [disabled]="horarioJaPassou(horario)"
         (click)="selecionarHorario(horario)">
 <h3>{{horario}}</h3>
 </button>

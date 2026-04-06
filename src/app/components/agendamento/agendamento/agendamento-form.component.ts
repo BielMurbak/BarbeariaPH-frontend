@@ -123,6 +123,16 @@ calcularHorariosOcupados(horarioInicio: string, duracao: number): string[] {
 
 
 selecionarHorario(horario: string) {
+  if (this.horarioJaPassou(horario)) {
+    Swal.fire({
+      title: 'Horário indisponível!',
+      text: 'Não é possível agendar para um horário que já passou hoje.',
+      icon: 'warning',
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+  
   this.horarioSelecionado = horario;
   this.etapaAtual = 'telefone';
 }
@@ -676,6 +686,33 @@ calcularTotal(): string {
   });
   
   return total.toFixed(2);
+}
+
+horarioJaPassou(horario: string): boolean {
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const mesHoje = hoje.getMonth();
+  const anoHoje = hoje.getFullYear();
+  
+  // Só aplica o filtro se a data selecionada for hoje
+  if (this.diaSelecionado === diaHoje && 
+      this.dataAtual.getMonth() === mesHoje && 
+      this.anoAtual === anoHoje) {
+    
+    const agora = new Date();
+    const horaAtual = agora.getHours();
+    const minutoAtual = agora.getMinutes();
+    
+    const [horaHorario, minutoHorario] = horario.split(':').map(Number);
+    
+    // Verifica se o horário já passou
+    if (horaHorario < horaAtual || 
+        (horaHorario === horaAtual && minutoHorario <= minutoAtual)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 formatarTelefone(event: any) {
