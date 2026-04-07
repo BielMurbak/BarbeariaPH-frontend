@@ -3,14 +3,12 @@
   <div class="container-fluid">
     <img src="assets/logo.png" alt="Logo" class="navbar-logo" />
     <a class="navbar-brand" href="#">PH Barbearia - Área do Barbeiro</a>
-    <button class="navbar-toggler" type="button" (click)="toggleMenu()" aria-label="Toggle navigation">
-      <i class="fas fa-bars"></i>
-    </button>
+    <button class="navbar-toggler" type="button" (click)="toggleMenu()"><i class="fas fa-bars"></i></button>
     <div class="collapse navbar-collapse justify-content-end" [class.show]="menuAberto">
       <div class="navbar-nav">
-        <a class="nav-link" (click)="mostrarSecao('agendamentos')" [class.active]="secaoAtiva === 'agendamentos'">Agendamentos</a>
-        <a class="nav-link" (click)="mostrarSecao('historico')"    [class.active]="secaoAtiva === 'historico'">Histórico</a>
-        <a class="nav-link" (click)="mostrarSecao('caixa')"        [class.active]="secaoAtiva === 'caixa'">Caixa</a>
+        <a class="nav-link" (click)="mostrarSecao('agendamentos')" [class.active]="secaoAtiva==='agendamentos'">Agendamentos</a>
+        <a class="nav-link" (click)="mostrarSecao('historico')"    [class.active]="secaoAtiva==='historico'">Histórico</a>
+        <a class="nav-link" (click)="mostrarSecao('caixa')"        [class.active]="secaoAtiva==='caixa'">Caixa</a>
         <a class="btn-conta" (click)="sair()">Sair</a>
       </div>
     </div>
@@ -22,71 +20,49 @@
   <!-- ── AGENDAMENTOS ───────────────────────────────────────────────────────── -->
   @if (secaoAtiva === 'agendamentos') {
   <div class="secao-wrapper">
-
     <div class="secao-header">
       <div class="secao-titulo">
         <i class="fas fa-calendar-alt icone-titulo"></i>
         <h2>Agendamentos Pendentes</h2>
         <span class="badge-count">{{ agendamentosFiltrados.length }}</span>
       </div>
+      <button class="btn-novo-agendamento" (click)="abrirNovoAgendamento()">
+        <i class="fas fa-plus"></i> Novo Agendamento
+      </button>
     </div>
 
     <div class="filtros-bar">
       <div class="filtro-busca">
         <i class="fas fa-search"></i>
-        <input type="text" placeholder="Buscar por nome ou serviço..."
-          [(ngModel)]="filtroTexto" class="input-busca" />
+        <input type="text" placeholder="Buscar por nome ou serviço..." [(ngModel)]="filtroTexto" class="input-busca" />
       </div>
-      <div class="filtro-status">
-        <select [(ngModel)]="filtroStatus" class="select-filtro">
-          <option value="">Todos os status</option>
-          <option value="PENDENTE">Pendente</option>
-          <option value="CONCLUIDO">Concluído</option>
-          <option value="CANCELADO">Cancelado</option>
-        </select>
-      </div>
-      <button class="btn-limpar" (click)="limparFiltros()">
-        <i class="fas fa-times"></i> Limpar
-      </button>
+      <button class="btn-limpar" (click)="limparFiltros()"><i class="fas fa-times"></i> Limpar</button>
     </div>
 
     <div class="tabela-container">
       <div class="tabela-scroll">
         <table class="tabela-agendamentos">
-          <thead>
-            <tr>
-              <th class="th-sortable" (click)="ordenarPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','ag') }}"></i></th>
-              <th>Telefone</th>
-              <th class="th-sortable" (click)="ordenarPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','ag') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','ag') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','ag') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','ag') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarPor('status')">Status <i class="fas {{ getIconeOrdenacao('status','ag') }}"></i></th>
-              <th>Ações</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th class="th-sortable" (click)="ordenarPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','ag') }}"></i></th>
+            <th>Telefone</th>
+            <th class="th-sortable" (click)="ordenarPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','ag') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','ag') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','ag') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','ag') }}"></i></th>
+            <th>Ações</th>
+          </tr></thead>
           <tbody>
             @if (agendamentosFiltrados.length === 0) {
-              <tr><td colspan="8" class="td-vazio"><i class="fas fa-calendar-times"></i><span>Nenhum agendamento encontrado</span></td></tr>
+              <tr><td colspan="7" class="td-vazio"><i class="fas fa-calendar-times"></i><span>Nenhum agendamento pendente</span></td></tr>
             }
             @for (ag of agendamentosFiltrados; track ag.id) {
-            <tr class="linha-agendamento">
-              <td class="td-nome">
-                <span class="avatar-inicial">{{ (ag.clienteEntity.nome || 'N')[0].toUpperCase() }}</span>
-                {{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}
-              </td>
-              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular || 'N/A' }}</td>
+            <tr>
+              <td class="td-nome"><span class="avatar-inicial">{{ (ag.clienteEntity.nome||'N')[0].toUpperCase() }}</span>{{ ag.clienteEntity.nome||'N/A' }} {{ ag.clienteEntity.sobrenome||'' }}</td>
+              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular||'N/A' }}</td>
               <td class="td-servico"><span class="tag-servico">{{ getServico(ag) }}</span></td>
               <td class="td-data">{{ formatarData(ag.data) }}</td>
               <td class="td-hora"><i class="fas fa-clock icone-hora"></i>{{ ag.horario }}</td>
               <td class="td-valor">R$ {{ formatarValor(ag) }}</td>
-              <td>
-                <span class="badge-status" [ngClass]="{
-                  'status-pendente':  ag.status === 'PENDENTE',
-                  'status-concluido': ag.status === 'CONCLUIDO',
-                  'status-cancelado': ag.status === 'CANCELADO'
-                }">{{ ag.status }}</span>
-              </td>
               <td class="td-acoes">
                 @if (ag.id) {
                   <button class="btn-acao btn-editar" (click)="editar(ag)" title="Editar"><i class="fas fa-pen"></i></button>
@@ -99,14 +75,12 @@
         </table>
       </div>
     </div>
-
   </div>
   }
 
   <!-- ── HISTÓRICO ──────────────────────────────────────────────────────────── -->
   @if (secaoAtiva === 'historico') {
   <div class="secao-wrapper">
-
     <div class="secao-header">
       <div class="secao-titulo">
         <i class="fas fa-history icone-titulo"></i>
@@ -114,59 +88,54 @@
         <span class="badge-count">{{ historicoFiltrado.length }}</span>
       </div>
     </div>
-
     <div class="filtros-bar">
       <div class="filtro-busca">
         <i class="fas fa-search"></i>
-        <input type="text" placeholder="Buscar por nome ou serviço..."
-          [(ngModel)]="filtroTextoHistorico" class="input-busca" />
+        <input type="text" placeholder="Buscar por nome ou serviço..." [(ngModel)]="filtroTextoHistorico" class="input-busca" />
       </div>
+      <select [(ngModel)]="filtroStatusHistorico" class="select-filtro">
+        <option value="">Todos</option>
+        <option value="CONCLUIDO">Concluído</option>
+        <option value="CANCELADO">Cancelado</option>
+      </select>
     </div>
-
     <div class="tabela-container">
       <div class="tabela-scroll">
         <table class="tabela-agendamentos">
-          <thead>
-            <tr>
-              <th class="th-sortable" (click)="ordenarHistoricoPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','hist') }}"></i></th>
-              <th>Telefone</th>
-              <th class="th-sortable" (click)="ordenarHistoricoPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','hist') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarHistoricoPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','hist') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarHistoricoPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','hist') }}"></i></th>
-              <th class="th-sortable" (click)="ordenarHistoricoPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','hist') }}"></i></th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','hist') }}"></i></th>
+            <th>Telefone</th>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','hist') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','hist') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','hist') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','hist') }}"></i></th>
+            <th class="th-sortable" (click)="ordenarHistoricoPor('status')">Status <i class="fas {{ getIconeOrdenacao('status','hist') }}"></i></th>
+          </tr></thead>
           <tbody>
             @if (historicoFiltrado.length === 0) {
               <tr><td colspan="7" class="td-vazio"><i class="fas fa-history"></i><span>Nenhum atendimento no histórico</span></td></tr>
             }
             @for (ag of historicoFiltrado; track ag.id) {
-            <tr class="linha-agendamento">
-              <td class="td-nome">
-                <span class="avatar-inicial avatar-historico">{{ (ag.clienteEntity.nome || 'N')[0].toUpperCase() }}</span>
-                {{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}
-              </td>
-              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular || 'N/A' }}</td>
+            <tr>
+              <td class="td-nome"><span class="avatar-inicial avatar-historico">{{ (ag.clienteEntity.nome||'N')[0].toUpperCase() }}</span>{{ ag.clienteEntity.nome||'N/A' }} {{ ag.clienteEntity.sobrenome||'' }}</td>
+              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular||'N/A' }}</td>
               <td class="td-servico"><span class="tag-servico">{{ getServico(ag) }}</span></td>
               <td class="td-data">{{ formatarData(ag.data) }}</td>
               <td class="td-hora"><i class="fas fa-clock icone-hora"></i>{{ ag.horario }}</td>
               <td class="td-valor">R$ {{ formatarValor(ag) }}</td>
-              <td><span class="badge-status status-concluido">{{ ag.status }}</span></td>
+              <td><span class="badge-status" [ngClass]="{'status-concluido': ag.status==='CONCLUIDO','status-cancelado': ag.status==='CANCELADO'}">{{ ag.status }}</span></td>
             </tr>
             }
           </tbody>
         </table>
       </div>
     </div>
-
   </div>
   }
 
   <!-- ── CAIXA ─────────────────────────────────────────────────────────────── -->
   @if (secaoAtiva === 'caixa') {
   <div class="secao-wrapper">
-
     <div class="secao-header">
       <div class="secao-titulo">
         <i class="fas fa-cash-register icone-titulo"></i>
@@ -175,7 +144,6 @@
       </div>
     </div>
 
-    <!-- Cards de resumo -->
     <div class="caixa-grid">
       <div class="caixa-card card-faturamento">
         <i class="fas fa-dollar-sign caixa-card-icone"></i>
@@ -187,11 +155,6 @@
         <div class="caixa-card-label">Atendimentos concluídos</div>
         <div class="caixa-card-valor">{{ getCaixaResumo().totalAtendimentos }}</div>
       </div>
-      <div class="caixa-card card-ticket">
-        <i class="fas fa-receipt caixa-card-icone"></i>
-        <div class="caixa-card-label">Ticket médio</div>
-        <div class="caixa-card-valor">R$ {{ getCaixaResumo().ticketMedio }}</div>
-      </div>
       <div class="caixa-card card-cancelados">
         <i class="fas fa-ban caixa-card-icone"></i>
         <div class="caixa-card-label">Cancelados</div>
@@ -199,23 +162,56 @@
       </div>
     </div>
 
-    <!-- Tabela de serviços mais realizados -->
-    <div class="caixa-secao-titulo">
-      <i class="fas fa-chart-bar"></i> Serviços mais realizados
+    <!-- Gráfico de barras interativo -->
+    <div class="grafico-card">
+      <div class="grafico-header">
+        <span class="caixa-secao-titulo"><i class="fas fa-chart-bar"></i> Desempenho</span>
+        <div class="grafico-toggle">
+          <button [class.ativo]="periodoCaixa==='semana'" (click)="periodoCaixa='semana'">Semana</button>
+          <button [class.ativo]="periodoCaixa==='mes'"    (click)="periodoCaixa='mes'">Meses</button>
+        </div>
+      </div>
+
+      <div class="grafico-legenda">
+        <span class="leg-item"><span class="leg-box leg-atendimentos"></span>Atendimentos</span>
+        <span class="leg-item"><span class="leg-box leg-faturamento"></span>Faturamento (R$)</span>
+      </div>
+
+      <div class="grafico-area">
+        @for (item of getCaixaGraficoData(); track item.label) {
+        <div class="grafico-coluna">
+          <div class="grafico-barras">
+            <div class="barra-wrap" title="R$ {{ item.faturamento.toFixed(2) }}">
+              <div class="barra barra-fat"
+                [style.height.%]="getMaxBarValue() > 0 ? (item.faturamento / getMaxBarValue()) * 100 : 0">
+                @if (item.faturamento > 0) {
+                  <span class="barra-label">R${{ item.faturamento.toFixed(0) }}</span>
+                }
+              </div>
+            </div>
+            <div class="barra-wrap" title="{{ item.atendimentos }} atendimentos">
+              <div class="barra barra-atend"
+                [style.height.%]="getCaixaResumo().totalAtendimentos > 0 ? (item.atendimentos / getCaixaResumo().totalAtendimentos) * 100 : 0">
+                @if (item.atendimentos > 0) {
+                  <span class="barra-label">{{ item.atendimentos }}</span>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="grafico-label">{{ item.label }}</div>
+        </div>
+        }
+      </div>
     </div>
 
+    <!-- Serviços mais realizados -->
+    <div class="caixa-secao-titulo"><i class="fas fa-chart-bar"></i> Serviços mais realizados</div>
     <div class="caixa-tabela-container">
       <table class="caixa-tabela">
-        <thead>
-          <tr>
-            <th>Serviço</th>
-            <th>Qtd. realizada</th>
-            <th>Receita gerada</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Serviço</th><th>Qtd.</th><th>Receita</th></tr></thead>
         <tbody>
           @if (getCaixaServicos().length === 0) {
-            <tr><td colspan="3" class="caixa-vazio"><i class="fas fa-chart-bar"></i><span>Nenhum dado disponível</span></td></tr>
+            <tr><td colspan="3" class="caixa-vazio"><i class="fas fa-chart-bar"></i><span>Sem dados</span></td></tr>
           }
           @for (item of getCaixaServicos(); track item.nome) {
           <tr>
@@ -228,100 +224,121 @@
       </table>
     </div>
 
-    <!-- Tabela de atendimentos recentes -->
-    <div class="caixa-secao-titulo">
-      <i class="fas fa-list-alt"></i> Atendimentos recentes
-    </div>
-
+    <!-- Atendimentos recentes -->
+    <div class="caixa-secao-titulo"><i class="fas fa-list-alt"></i> Atendimentos recentes</div>
     <div class="caixa-tabela-container">
       <table class="caixa-tabela">
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Serviço</th>
-            <th>Data</th>
-            <th>Hora</th>
-            <th>Valor</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Cliente</th><th>Serviço</th><th>Data</th><th>Hora</th><th>Valor</th><th>Status</th></tr></thead>
         <tbody>
           @if (getAtendimentosRecentes().length === 0) {
-            <tr><td colspan="6" class="caixa-vazio"><i class="fas fa-list-alt"></i><span>Nenhum atendimento registrado</span></td></tr>
+            <tr><td colspan="6" class="caixa-vazio"><i class="fas fa-list-alt"></i><span>Sem dados</span></td></tr>
           }
           @for (ag of getAtendimentosRecentes(); track ag.id) {
           <tr>
-            <td>{{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}</td>
+            <td>{{ ag.clienteEntity.nome||'N/A' }} {{ ag.clienteEntity.sobrenome||'' }}</td>
             <td><span class="caixa-servico-tag">{{ getServico(ag) }}</span></td>
             <td>{{ formatarData(ag.data) }}</td>
             <td>{{ ag.horario }}</td>
             <td class="caixa-valor-positivo">R$ {{ formatarValor(ag) }}</td>
-            <td>
-              <span class="badge-status" [ngClass]="{
-                'status-pendente':  ag.status === 'PENDENTE',
-                'status-concluido': ag.status === 'CONCLUIDO',
-                'status-cancelado': ag.status === 'CANCELADO'
-              }">{{ ag.status }}</span>
-            </td>
+            <td><span class="badge-status" [ngClass]="{'status-concluido':ag.status==='CONCLUIDO','status-cancelado':ag.status==='CANCELADO'}">{{ ag.status }}</span></td>
           </tr>
           }
         </tbody>
       </table>
     </div>
-
   </div>
   }
-
 </div>
 
-<!-- ── MODAL EDIÇÃO ────────────────────────────────────────────────────────── -->
+<!-- ── MODAL EDIÇÃO ───────────────────────────────────────────────────────── -->
 @if (mostrarFormEdicao && agendamentoEditando) {
 <div class="modal-overlay" (click)="cancelarEdicao()">
   <div class="modal-edicao" (click)="$event.stopPropagation()">
-    <div class="modal-header-custom">
-      <i class="fas fa-pen"></i>
-      <h3>Editar Agendamento</h3>
-    </div>
-
-    <div class="form-group">
-      <label>Serviço</label>
-      <select class="form-control"
-        [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || ''"
-        (change)="atualizarServico($any($event.target).value)">
-        @for (servico of servicosDisponiveis; track servico.nome) {
-          <option [value]="servico.nome"
-            [selected]="servico.nome === agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao">
-            {{ servico.nome }} — R$ {{ servico.preco.toFixed(2) }}
-          </option>
+    <div class="modal-header-custom"><i class="fas fa-pen"></i><h3>Editar Agendamento</h3></div>
+    <div class="form-group"><label>Serviço</label>
+      <select class="form-control" [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao||''" (change)="atualizarServico($any($event.target).value)">
+        @for (s of servicosDisponiveis; track s.nome) {
+          <option [value]="s.nome" [selected]="s.nome===agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao">{{ s.nome }} — R$ {{ s.preco.toFixed(2) }}</option>
         }
       </select>
     </div>
-
-    <div class="form-group">
-      <label>Data</label>
-      <input type="date" class="form-control" [(ngModel)]="agendamentoEditando.data"
-        [min]="getDataMinima()"
-        (change)="validarData($event); buscarHorariosLivres(agendamentoEditando.data, agendamentoEditando.id)" />
+    <div class="form-group"><label>Data</label>
+      <input type="date" class="form-control" [(ngModel)]="agendamentoEditando.data" [min]="getDataMinima()" (change)="validarData($event); buscarHorariosLivres(agendamentoEditando.data, agendamentoEditando.id)" />
     </div>
-
-    <div class="form-group">
-      <label>Horário</label>
+    <div class="form-group"><label>Horário</label>
       <select class="form-control" [(ngModel)]="agendamentoEditando.horario">
-        @for (horario of horariosLivres; track horario) {
-          <option [value]="horario">{{ horario }}</option>
-        }
+        @for (h of horariosLivres; track h) { <option [value]="h">{{ h }}</option> }
       </select>
     </div>
-
-    <div class="form-group">
-      <label>Valor</label>
-      <input type="text" class="form-control"
-        [value]="'R$ ' + (agendamentoEditando.profissionalServicoEntity.preco?.toFixed(2) || '0,00')" readonly />
+    <div class="form-group"><label>Valor</label>
+      <input type="text" class="form-control" [value]="'R$ '+(agendamentoEditando.profissionalServicoEntity.preco?.toFixed(2)||'0,00')" readonly />
     </div>
-
     <div class="form-actions">
       <button class="btn-modal-salvar" (click)="salvarEdicao()"><i class="fas fa-check"></i> Salvar</button>
       <button class="btn-modal-cancelar" (click)="cancelarEdicao()"><i class="fas fa-times"></i> Cancelar</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ── MODAL NOVO AGENDAMENTO ─────────────────────────────────────────────── -->
+@if (mostrarFormNovoAgendamento) {
+<div class="modal-overlay" (click)="mostrarFormNovoAgendamento=false">
+  <div class="modal-edicao modal-novo" (click)="$event.stopPropagation()">
+    <div class="modal-header-custom"><i class="fas fa-calendar-plus"></i><h3>Novo Agendamento</h3></div>
+
+    <div class="form-row-2">
+      <div class="form-group"><label>Nome</label>
+        <input type="text" class="form-control" [(ngModel)]="novoAgendamento.nome" placeholder="Nome do cliente" />
+      </div>
+      <div class="form-group"><label>Sobrenome</label>
+        <input type="text" class="form-control" [(ngModel)]="novoAgendamento.sobrenome" placeholder="Sobrenome" />
+      </div>
+    </div>
+
+    <div class="form-group"><label>Telefone</label>
+      <input type="tel" class="form-control" [(ngModel)]="novoAgendamento.telefone" placeholder="(xx) xxxxx-xxxx" (input)="formatarTelefone($event)" />
+    </div>
+
+    <div class="form-group"><label>Serviço</label>
+      <select class="form-control" [(ngModel)]="novoAgendamento.servico">
+        <option value="">Selecione...</option>
+        @for (s of servicosDisponiveis; track s.nome) {
+          <option [value]="s.nome">{{ s.nome }} — R$ {{ s.preco.toFixed(2) }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group"><label>Serviço adicional (opcional)</label>
+      <select class="form-control" [(ngModel)]="novoAgendamento.servicoAdicional">
+        @for (s of servicosAdicionaisDisponiveis; track s.nome) {
+          <option [value]="s.nome">{{ s.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group"><label>Data</label>
+        <input type="date" class="form-control" [(ngModel)]="novoAgendamento.data" [min]="getDataMinima()" (change)="onNovaDataChange()" />
+      </div>
+      <div class="form-group"><label>Horário</label>
+        <select class="form-control" [(ngModel)]="novoAgendamento.horario">
+          <option value="">Selecione a data primeiro</option>
+          @for (h of horariosNovoAgendamento; track h) { <option [value]="h">{{ h }}</option> }
+        </select>
+      </div>
+    </div>
+
+    @if (novoAgendamento.servico) {
+    <div class="preco-total-preview">
+      <span>Total estimado:</span>
+      <strong>R$ {{ getPrecoNovoAgendamento().toFixed(2) }}</strong>
+    </div>
+    }
+
+    <div class="form-actions">
+      <button class="btn-modal-salvar" (click)="salvarNovoAgendamento()"><i class="fas fa-check"></i> Criar Agendamento</button>
+      <button class="btn-modal-cancelar" (click)="mostrarFormNovoAgendamento=false"><i class="fas fa-times"></i> Cancelar</button>
     </div>
   </div>
 </div>

@@ -42,3 +42,8 @@ export class AgendamentoService {
     );
   }
 }
+  patch(id: number, updates: any): import('rxjs').Observable<any> {
+    return this.http.patch<any>(`${this.api}/${id}`, updates).pipe(
+      catchError(error => throwError(() => error))
+    );
+  }

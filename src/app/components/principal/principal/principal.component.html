@@ -1,23 +1,20 @@
 <main class="pagina-principal">
-  <app-navbar ></app-navbar>
+  <app-navbar></app-navbar>
 
   <div class="hero-content">
+    <div class="hero-linha-ouro"></div>
     <h1 class="slogan">
       Estilo clássico,<br />
-      cuidado moderno.<br />
+      <span class="slogan-destaque">cuidado moderno.</span>
     </h1>
-    <h1 class="sub-slogan">Feita para quem valoriza tradição e qualidade.</h1>
-
-    <button
-      type="button"
-      class="btn-agendar btn-primary btn-lg"
-      (click)="abrirModal()"
-    >
-      Agendar Horário
-    </button>
+    <p class="sub-slogan">Feita para quem valoriza tradição e qualidade em cada detalhe.</p>
+    <div class="hero-botoes">
+      <button type="button" class="btn-agendar" (click)="abrirModal()">
+        Agendar Horário
+      </button>
+      <a class="btn-outline-hero" (click)="scrollToServicos()">Ver Serviços</a>
+    </div>
   </div>
 
-<app-agendamento 
-  [showModal]="showModal" 
-  (modalClosed)="fecharModal()">
-</app-agendamento>
+  <app-agendamento [showModal]="showModal" (modalClosed)="fecharModal()"></app-agendamento>
+</main>

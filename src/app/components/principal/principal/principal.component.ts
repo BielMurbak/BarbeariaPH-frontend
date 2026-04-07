@@ -11,12 +11,7 @@ import { NavbarComponent } from '../../navbar/navbar.component';
 })
 export class PrincipalComponent {
   showModal = false;
-
-  abrirModal() {
-    this.showModal = true;
-  }
-
-  fecharModal() {
-    this.showModal = false;
-  }
+  abrirModal()    { this.showModal = true; }
+  fecharModal()   { this.showModal = false; }
+  scrollToServicos() { document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth' }); }
 }

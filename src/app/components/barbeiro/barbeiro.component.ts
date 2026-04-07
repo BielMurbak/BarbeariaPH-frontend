@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AgendamentoService } from '../../services/agendamento/agendamento.service';
 import { ProfissionalService } from '../../services/profissional/profissional.service';
+import { ClienteService } from '../../services/cliente/cliente.service';
+import { ProfissionalservicoService } from '../../services/profissionalservico/profissionalservico.service';
 import { NotificacaoService } from '../../services/notificacao.service';
 import { Agendamento } from '../../models/agendamento/agendamento';
 import { Profissional } from '../../models/profissional/profissional';
@@ -26,17 +28,27 @@ export class BarbeiroComponent implements OnInit {
   historico: Agendamento[] = [];
   agendamentoEditando: Agendamento | null = null;
   mostrarFormEdicao = false;
+  mostrarFormNovoAgendamento = false;
 
-  // Filtros e ordenação — agendamentos
+  // Filtros agendamentos
   filtroTexto = '';
-  filtroStatus = '';
   colunaOrdenacao: ColunaOrdenacao = 'data';
   direcaoOrdenacao: 'asc' | 'desc' = 'asc';
 
-  // Filtros e ordenação — histórico
+  // Filtros histórico
   filtroTextoHistorico = '';
+  filtroStatusHistorico = '';
   colunaOrdenacaoHistorico: ColunaOrdenacao = 'data';
   direcaoOrdenacaoHistorico: 'asc' | 'desc' = 'desc';
+
+  // Novo agendamento
+  novoAgendamento = {
+    nome: '', sobrenome: '', telefone: '',
+    servico: '', servicoAdicional: '',
+    data: '', horario: ''
+  };
+  profissionalServicos: any[] = [];
+  horariosNovoAgendamento: string[] = [];
 
   servicosDisponiveis = [
     { nome: 'Cabelo e barba', preco: 60.00 },
@@ -48,6 +60,11 @@ export class BarbeiroComponent implements OnInit {
     { nome: 'Barba', preco: 35.00 },
     { nome: 'Sobrancelha', preco: 10.00 }
   ];
+  servicosAdicionaisDisponiveis = [
+    { nome: '', label: 'Nenhum' },
+    { nome: 'Barba', label: 'Barba — R$ 35,00' },
+    { nome: 'Sobrancelha', label: 'Sobrancelha — R$ 10,00' }
+  ];
 
   horariosDisponiveis = [
     '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
@@ -56,151 +73,205 @@ export class BarbeiroComponent implements OnInit {
   ];
   horariosLivres: string[] = [];
 
+  // Caixa
+  periodoCaixa: 'semana' | 'mes' = 'semana';
+
   constructor(
     private router: Router,
     private agendamentoService: AgendamentoService,
     private profissionalService: ProfissionalService,
+    private clienteService: ClienteService,
+    private profissionalServicoService: ProfissionalservicoService,
     private notificacaoService: NotificacaoService
   ) {}
 
   ngOnInit() {
-    const profissionalSalvo = localStorage.getItem('profissionalLogado');
-    if (profissionalSalvo) {
-      this.profissionalLogado = JSON.parse(profissionalSalvo);
-      this.carregarAgendamentos();
-    } else {
-      this.router.navigate(['/login']);
-    }
+    const s = localStorage.getItem('profissionalLogado');
+    if (s) { this.profissionalLogado = JSON.parse(s); this.carregarAgendamentos(); }
+    else this.router.navigate(['/login']);
   }
 
   carregarAgendamentos() {
     this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        this.agendamentos = agendamentos.filter(a => a.status === 'PENDENTE');
+      next: (ags) => {
+        const agora = new Date();
+        // Auto-atualiza pendentes que já passaram
+        const patchPromises = ags.filter(a => {
+          if (a.status !== 'PENDENTE' || !a.data || !a.horario) return false;
+          const [ano, mes, dia] = a.data.split('-').map(Number);
+          const [hr, mn] = a.horario.split(':').map(Number);
+          return new Date(ano, mes - 1, dia, hr, mn) < agora;
+        }).map(a => this.agendamentoService.patch(a.id!, { status: 'CONCLUIDO' }).toPromise().catch(() => {}));
+
+        Promise.all(patchPromises).then(() => {
+          this.agendamentoService.listar().subscribe({ next: (lista) => {
+            this.agendamentos = lista.filter(a => a.status === 'PENDENTE');
+          }});
+        });
       },
-      error: () => Swal.fire('Erro', 'Erro ao carregar agendamentos', 'error')
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao carregar agendamentos', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
   }
 
   carregarHistorico() {
     this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        this.historico = agendamentos.filter(a => a.status === 'CONCLUIDO');
-      },
-      error: () => Swal.fire('Erro', 'Erro ao carregar histórico', 'error')
+      next: (ags) => { this.historico = ags.filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO'); },
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao carregar histórico', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
   }
 
-  // ── Getters filtrados/ordenados ─────────────────────────────────────────────
-
+  // ── Getters filtrados/ordenados ───────────────────────────────────────────────
   get agendamentosFiltrados(): Agendamento[] {
-    return this.aplicarFiltroOrdenacao(
-      this.agendamentos, this.filtroTexto, this.filtroStatus,
-      this.colunaOrdenacao, this.direcaoOrdenacao
-    );
+    return this.aplicarFiltro(this.agendamentos, this.filtroTexto, '', this.colunaOrdenacao, this.direcaoOrdenacao);
   }
 
   get historicoFiltrado(): Agendamento[] {
-    return this.aplicarFiltroOrdenacao(
-      this.historico, this.filtroTextoHistorico, '',
-      this.colunaOrdenacaoHistorico, this.direcaoOrdenacaoHistorico
-    );
+    return this.aplicarFiltro(this.historico, this.filtroTextoHistorico, this.filtroStatusHistorico, this.colunaOrdenacaoHistorico, this.direcaoOrdenacaoHistorico);
   }
 
-  private aplicarFiltroOrdenacao(
-    lista: Agendamento[], texto: string, status: string,
-    coluna: ColunaOrdenacao, direcao: 'asc' | 'desc'
-  ): Agendamento[] {
-    let res = [...lista];
-
+  private aplicarFiltro(lista: Agendamento[], texto: string, status: string, col: ColunaOrdenacao, dir: 'asc'|'desc'): Agendamento[] {
+    let r = [...lista];
     if (texto.trim()) {
-      const busca = texto.toLowerCase().trim();
-      res = res.filter(a => {
-        const nome = `${a.clienteEntity.nome || ''} ${a.clienteEntity.sobrenome || ''}`.toLowerCase();
+      const b = texto.toLowerCase();
+      r = r.filter(a => {
+        const nome = `${a.clienteEntity.nome||''} ${a.clienteEntity.sobrenome||''}`.toLowerCase();
         const serv = this.getServico(a).toLowerCase();
-        return nome.includes(busca) || serv.includes(busca);
+        return nome.includes(b) || serv.includes(b);
       });
     }
+    if (status) r = r.filter(a => a.status === status);
+    if (col) r.sort((a, b) => {
+      let vA: any = '', vB: any = '';
+      switch (col) {
+        case 'nome':    vA = `${a.clienteEntity.nome||''} ${a.clienteEntity.sobrenome||''}`.toLowerCase(); vB = `${b.clienteEntity.nome||''} ${b.clienteEntity.sobrenome||''}`.toLowerCase(); break;
+        case 'servico': vA = this.getServico(a).toLowerCase(); vB = this.getServico(b).toLowerCase(); break;
+        case 'data':    vA = a.data||''; vB = b.data||''; break;
+        case 'horario': vA = a.horario||''; vB = b.horario||''; break;
+        case 'valor':   vA = a.preco||a.profissionalServicoEntity.preco||0; vB = b.preco||b.profissionalServicoEntity.preco||0; break;
+        case 'status':  vA = (a.status||'').toLowerCase(); vB = (b.status||'').toLowerCase(); break;
+      }
+      if (vA < vB) return dir === 'asc' ? -1 : 1;
+      if (vA > vB) return dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return r;
+  }
 
-    if (status) res = res.filter(a => a.status === status);
+  ordenarPor(col: ColunaOrdenacao) {
+    if (this.colunaOrdenacao === col) this.direcaoOrdenacao = this.direcaoOrdenacao === 'asc' ? 'desc' : 'asc';
+    else { this.colunaOrdenacao = col; this.direcaoOrdenacao = 'asc'; }
+  }
+  ordenarHistoricoPor(col: ColunaOrdenacao) {
+    if (this.colunaOrdenacaoHistorico === col) this.direcaoOrdenacaoHistorico = this.direcaoOrdenacaoHistorico === 'asc' ? 'desc' : 'asc';
+    else { this.colunaOrdenacaoHistorico = col; this.direcaoOrdenacaoHistorico = 'asc'; }
+  }
+  getIconeOrdenacao(col: ColunaOrdenacao, ctx: 'ag'|'hist' = 'ag'): string {
+    const c = ctx === 'ag' ? this.colunaOrdenacao : this.colunaOrdenacaoHistorico;
+    const d = ctx === 'ag' ? this.direcaoOrdenacao : this.direcaoOrdenacaoHistorico;
+    if (c !== col) return 'fa-sort';
+    return d === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+  }
+  limparFiltros() { this.filtroTexto = ''; this.colunaOrdenacao = 'data'; this.direcaoOrdenacao = 'asc'; }
 
-    if (coluna) {
-      res.sort((a, b) => {
-        let vA: string | number = '';
-        let vB: string | number = '';
-        switch (coluna) {
-          case 'nome':
-            vA = `${a.clienteEntity.nome || ''} ${a.clienteEntity.sobrenome || ''}`.toLowerCase();
-            vB = `${b.clienteEntity.nome || ''} ${b.clienteEntity.sobrenome || ''}`.toLowerCase();
-            break;
-          case 'servico':
-            vA = this.getServico(a).toLowerCase();
-            vB = this.getServico(b).toLowerCase();
-            break;
-          case 'data':  vA = a.data || '';      vB = b.data || '';      break;
-          case 'horario': vA = a.horario || ''; vB = b.horario || ''; break;
-          case 'valor':
-            vA = a.preco || a.profissionalServicoEntity.preco || 0;
-            vB = b.preco || b.profissionalServicoEntity.preco || 0;
-            break;
-          case 'status': vA = (a.status || '').toLowerCase(); vB = (b.status || '').toLowerCase(); break;
-        }
-        if (vA < vB) return direcao === 'asc' ? -1 : 1;
-        if (vA > vB) return direcao === 'asc' ? 1 : -1;
-        return 0;
-      });
+  // ── Novo agendamento pelo barbeiro ────────────────────────────────────────────
+  abrirNovoAgendamento() {
+    this.novoAgendamento = { nome: '', sobrenome: '', telefone: '', servico: '', servicoAdicional: '', data: '', horario: '' };
+    this.horariosNovoAgendamento = [];
+    this.profissionalServicoService.listar().subscribe({ next: (ps: any[]) => { this.profissionalServicos = ps; } });
+    this.mostrarFormNovoAgendamento = true;
+  }
+
+  onNovaDataChange() {
+    if (!this.novoAgendamento.data) return;
+    const d = new Date(this.novoAgendamento.data + 'T00:00:00');
+    if (d.getDay() === 0) {
+      Swal.fire({ title: 'Domingo fechado', text: 'Não funcionamos aos domingos.', icon: 'error', confirmButtonColor: '#BC9E5F' });
+      this.novoAgendamento.data = ''; this.horariosNovoAgendamento = []; return;
     }
-    return res;
+    this.agendamentoService.listar().subscribe({ next: (ags) => {
+      const ocupados = ags.filter(a => a.data === this.novoAgendamento.data && a.status === 'PENDENTE').map(a => a.horario);
+      this.horariosNovoAgendamento = this.horariosDisponiveis.filter(h => !ocupados.includes(h));
+    }});
   }
 
-  ordenarPor(coluna: ColunaOrdenacao) {
-    if (this.colunaOrdenacao === coluna) {
-      this.direcaoOrdenacao = this.direcaoOrdenacao === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.colunaOrdenacao = coluna;
-      this.direcaoOrdenacao = 'asc';
+  getPrecoNovoAgendamento(): number {
+    let total = 0;
+    if (this.novoAgendamento.servico && this.profissionalServicos.length) {
+      const ps = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === this.novoAgendamento.servico);
+      if (ps) total += ps.preco || 0;
     }
-  }
-
-  ordenarHistoricoPor(coluna: ColunaOrdenacao) {
-    if (this.colunaOrdenacaoHistorico === coluna) {
-      this.direcaoOrdenacaoHistorico = this.direcaoOrdenacaoHistorico === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.colunaOrdenacaoHistorico = coluna;
-      this.direcaoOrdenacaoHistorico = 'asc';
+    if (this.novoAgendamento.servicoAdicional && this.profissionalServicos.length) {
+      const pa = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === this.novoAgendamento.servicoAdicional);
+      if (pa) total += pa.preco || 0;
     }
+    return total;
   }
 
-  getIconeOrdenacao(coluna: ColunaOrdenacao, ctx: 'ag' | 'hist' = 'ag'): string {
-    const col = ctx === 'ag' ? this.colunaOrdenacao : this.colunaOrdenacaoHistorico;
-    const dir = ctx === 'ag' ? this.direcaoOrdenacao : this.direcaoOrdenacaoHistorico;
-    if (col !== coluna) return 'fa-sort';
-    return dir === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+  salvarNovoAgendamento() {
+    const { nome, sobrenome, telefone, servico, data, horario } = this.novoAgendamento;
+    if (!nome || !sobrenome || !telefone || !servico || !data || !horario) {
+      Swal.fire({ title: 'Campos obrigatórios', text: 'Preencha todos os campos para criar o agendamento.', icon: 'warning', confirmButtonColor: '#BC9E5F' }); return;
+    }
+    const psEncontrado = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === servico);
+    if (!psEncontrado) {
+      Swal.fire({ title: 'Serviço não encontrado', text: 'Serviço não disponível no sistema.', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
+    }
+
+    // Tenta achar cliente pelo telefone, se não existir cria um novo
+    this.clienteService.listar().subscribe({ next: (clientes) => {
+      const telNum = telefone.replace(/\D/g, '');
+      const clienteExistente = clientes.find((c: any) => c.celular.replace(/\D/g, '') === telNum);
+      if (clienteExistente) {
+        this.criarAgendamentoParaCliente(clienteExistente, psEncontrado);
+      } else {
+        const novoCliente = { nome, sobrenome, celular: telefone, senha: telNum.slice(-6) };
+        this.clienteService.save(novoCliente).subscribe({
+          next: (c) => this.criarAgendamentoParaCliente(c, psEncontrado),
+          error: () => Swal.fire({ title: 'Erro', text: 'Não foi possível criar o cliente.', icon: 'error', confirmButtonColor: '#BC9E5F' })
+        });
+      }
+    }});
   }
 
-  limparFiltros() {
-    this.filtroTexto = '';
-    this.filtroStatus = '';
-    this.colunaOrdenacao = 'data';
-    this.direcaoOrdenacao = 'asc';
+  private criarAgendamentoParaCliente(cliente: any, psEncontrado: any) {
+    const { servicoAdicional, data, horario } = this.novoAgendamento;
+    let servicoCompleto = psEncontrado.servicoEntity.descricao;
+    let precoTotal = psEncontrado.preco || 0;
+    if (servicoAdicional) {
+      const pa = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === servicoAdicional);
+      if (pa) { servicoCompleto += ' + ' + servicoAdicional; precoTotal += pa.preco || 0; }
+    }
+    const ag = {
+      data, local: 'Barbearia PH', horario, status: 'PENDENTE',
+      observacoes: servicoCompleto, preco: precoTotal,
+      clienteEntity: { id: cliente.id },
+      profissionalServicoEntity: { id: psEncontrado.id }
+    };
+    this.agendamentoService.salvar(ag).subscribe({
+      next: () => {
+        Swal.fire({ title: 'Agendamento criado!', html: `<p>${servicoCompleto}<br>${this.formatarData(data)} às ${horario}<br><strong>R$ ${precoTotal.toFixed(2)}</strong></p>`, icon: 'success', confirmButtonColor: '#BC9E5F' });
+        this.mostrarFormNovoAgendamento = false;
+        this.carregarAgendamentos();
+      },
+      error: (e) => Swal.fire({ title: 'Erro', text: e?.error || 'Erro ao criar agendamento.', icon: 'error', confirmButtonColor: '#BC9E5F' })
+    });
   }
 
-  // ── Edição ──────────────────────────────────────────────────────────────────
-
-  editar(agendamento: Agendamento) {
-    if (!agendamento.id) return;
-    this.agendamentoEditando = { ...agendamento };
-    this.buscarHorariosLivres(agendamento.data, agendamento.id);
+  // ── Edição ─────────────────────────────────────────────────────────────────────
+  editar(ag: Agendamento) {
+    if (!ag.id) return;
+    this.agendamentoEditando = { ...ag };
+    this.buscarHorariosLivres(ag.data, ag.id);
     this.mostrarFormEdicao = true;
   }
 
-  buscarHorariosLivres(data: string, agendamentoId?: number) {
+  buscarHorariosLivres(data: string, agId?: number) {
     const d = new Date(data + 'T00:00:00');
     if (d.getDay() === 0) { this.horariosLivres = []; return; }
     this.agendamentoService.listar().subscribe({
       next: (ags) => {
-        const ocupados = ags.filter(a => a.data === data && a.id !== agendamentoId && a.status === 'PENDENTE').map(a => a.horario);
-        this.horariosLivres = this.horariosDisponiveis.filter(h => !ocupados.includes(h));
+        const ocu = ags.filter(a => a.data === data && a.id !== agId && a.status === 'PENDENTE').map(a => a.horario);
+        this.horariosLivres = this.horariosDisponiveis.filter(h => !ocu.includes(h));
       },
       error: () => { this.horariosLivres = [...this.horariosDisponiveis]; }
     });
@@ -208,25 +279,22 @@ export class BarbeiroComponent implements OnInit {
 
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
-    fetch('http://localhost:8080/api/profissionais/servicos')
-      .then(r => r.json())
-      .then((ps: any[]) => {
-        const found = ps.find(p => p.servicoEntity?.descricao === novoServico);
-        if (found && this.agendamentoEditando) this.agendamentoEditando.profissionalServicoEntity = found;
-      })
-      .catch(e => console.error('Erro ao buscar serviços:', e));
+    this.profissionalServicoService.listar().subscribe({
+      next: (ps: any[]) => {
+        const f = ps.find(p => p.servicoEntity?.descricao === novoServico);
+        if (f && this.agendamentoEditando) this.agendamentoEditando.profissionalServicoEntity = f;
+      }
+    });
   }
 
   salvarEdicao() {
     if (!this.agendamentoEditando?.id) return;
     if (new Date(this.agendamentoEditando.data + 'T00:00:00').getDay() === 0) {
-      Swal.fire('Erro', 'Não funcionamos aos domingos', 'error'); return;
+      Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
     }
     const limpo = {
-      id: this.agendamentoEditando.id,
-      data: this.agendamentoEditando.data,
-      local: this.agendamentoEditando.local,
-      horario: this.agendamentoEditando.horario,
+      id: this.agendamentoEditando.id, data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local, horario: this.agendamentoEditando.horario,
       status: this.agendamentoEditando.status,
       observacoes: this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '',
       preco: this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0,
@@ -236,70 +304,115 @@ export class BarbeiroComponent implements OnInit {
     this.agendamentoService.atualizar(this.agendamentoEditando.id, limpo).subscribe({
       next: () => {
         const { clienteEntity, profissionalServicoEntity, data, horario } = this.agendamentoEditando!;
-        this.notificacaoService.adicionarNotificacao(
-          clienteEntity.id,
-          `Seu agendamento foi alterado: ${profissionalServicoEntity.servicoEntity?.descricao || 'Serviço'} em ${data} às ${horario}`,
-          'EDITADO'
-        );
-        Swal.fire('Sucesso', `Agendamento de ${clienteEntity.nome || 'Cliente'} atualizado!`, 'success');
-        this.cancelarEdicao();
-        this.carregarAgendamentos();
+        this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi alterado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'EDITADO');
+        Swal.fire({ title: 'Atualizado!', text: `Agendamento de ${clienteEntity.nome||'cliente'} salvo.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
+        this.cancelarEdicao(); this.carregarAgendamentos();
       },
-      error: () => Swal.fire('Erro', 'Erro ao atualizar agendamento', 'error')
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao atualizar', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
   }
 
   cancelarEdicao() { this.agendamentoEditando = null; this.mostrarFormEdicao = false; }
 
-  excluir(agendamento: Agendamento) {
-    if (!agendamento.id) return;
+  excluir(ag: Agendamento) {
+    if (!ag.id) return;
     Swal.fire({
-      title: 'Confirmar exclusão', text: 'Deseja realmente excluir este agendamento?',
+      title: 'Confirmar exclusão', text: `Excluir agendamento de ${ag.clienteEntity.nome||'cliente'}?`,
       icon: 'warning', showCancelButton: true,
-      confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar'
-    }).then(result => {
-      if (!result.isConfirmed) return;
-      const { id, clienteEntity, profissionalServicoEntity, data, horario } = agendamento;
-      const servico = profissionalServicoEntity.servicoEntity?.descricao || 'Serviço';
+      confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#9a2020', cancelButtonColor: '#BC9E5F'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      const { id, clienteEntity, profissionalServicoEntity, data, horario } = ag;
       this.agendamentoService.deletar(id!).subscribe({
         next: () => {
-          this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${servico} em ${data} às ${horario}`, 'CANCELADO');
+          this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'CANCELADO');
           this.agendamentos = this.agendamentos.filter(a => a.id !== id);
-          Swal.fire('Sucesso', `Agendamento de ${clienteEntity.nome || 'Cliente'} excluído!`, 'success');
+          Swal.fire({ title: 'Excluído!', text: `Agendamento removido.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
         },
-        error: (error) => {
-          if (error.status === 0 || error.status === 200) {
-            this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${servico} em ${data} às ${horario}`, 'CANCELADO');
+        error: (err) => {
+          if (err.status === 0 || err.status === 200) {
+            this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'CANCELADO');
             this.agendamentos = this.agendamentos.filter(a => a.id !== id);
-            Swal.fire('Sucesso', 'Agendamento excluído!', 'success');
-          } else {
-            Swal.fire('Erro', 'Erro ao excluir agendamento', 'error');
-          }
+            Swal.fire({ title: 'Excluído!', text: `Agendamento removido.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
+          } else Swal.fire({ title: 'Erro', text: 'Erro ao excluir', icon: 'error', confirmButtonColor: '#BC9E5F' });
         }
       });
     });
   }
 
+  // ── Caixa ─────────────────────────────────────────────────────────────────────
+  getCaixaResumo() {
+    const todos = [...this.agendamentos, ...this.historico];
+    const concluidos = todos.filter(a => a.status === 'CONCLUIDO');
+    const cancelados = todos.filter(a => a.status === 'CANCELADO');
+    const fat = concluidos.reduce((acc, a) => acc + (a.preco || a.profissionalServicoEntity.preco || 0), 0);
+    return { faturamentoTotal: fat.toFixed(2), totalAtendimentos: concluidos.length, totalCancelados: cancelados.length };
+  }
+
+  getCaixaServicos() {
+    const concluidos = [...this.agendamentos, ...this.historico].filter(a => a.status === 'CONCLUIDO');
+    const mapa = new Map<string, { quantidade: number; receita: number }>();
+    concluidos.forEach(a => {
+      const n = this.getServico(a);
+      const p = a.preco || a.profissionalServicoEntity.preco || 0;
+      const c = mapa.get(n) || { quantidade: 0, receita: 0 };
+      mapa.set(n, { quantidade: c.quantidade + 1, receita: c.receita + p });
+    });
+    return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, quantidade: v.quantidade, receita: v.receita.toFixed(2) })).sort((a, b) => b.quantidade - a.quantidade);
+  }
+
+  getAtendimentosRecentes() {
+    return [...this.agendamentos, ...this.historico]
+      .filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO')
+      .sort((a, b) => (b.data + b.horario).localeCompare(a.data + a.horario))
+      .slice(0, 15);
+  }
+
+  getCaixaGraficoData(): { label: string; atendimentos: number; faturamento: number }[] {
+    const todos = [...this.agendamentos, ...this.historico].filter(a => a.status === 'CONCLUIDO');
+    const hoje = new Date();
+
+    if (this.periodoCaixa === 'semana') {
+      // Domingo a sábado da semana atual
+      const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const inicioSemana = new Date(hoje);
+      inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+      return diasSemana.map((label, i) => {
+        const d = new Date(inicioSemana);
+        d.setDate(inicioSemana.getDate() + i);
+        const iso = d.toISOString().split('T')[0];
+        const do_dia = todos.filter(a => a.data === iso);
+        return { label, atendimentos: do_dia.length, faturamento: do_dia.reduce((acc, a) => acc + (a.preco || a.profissionalServicoEntity.preco || 0), 0) };
+      });
+    } else {
+      // Todos os meses do ano atual
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const ano = hoje.getFullYear();
+      return meses.map((label, i) => {
+        const mes = String(i + 1).padStart(2, '0');
+        const do_mes = todos.filter(a => a.data && a.data.startsWith(`${ano}-${mes}`));
+        return { label, atendimentos: do_mes.length, faturamento: do_mes.reduce((acc, a) => acc + (a.preco || a.profissionalServicoEntity.preco || 0), 0) };
+      });
+    }
+  }
+
+  // ── UI ────────────────────────────────────────────────────────────────────────
   toggleMenu() { this.menuAberto = !this.menuAberto; }
 
   mostrarSecao(secao: string) {
     this.secaoAtiva = secao;
     if (secao === 'historico' || secao === 'caixa') this.carregarHistorico();
+    if (secao === 'caixa') this.carregarAgendamentos();
   }
 
-  sair() {
-    localStorage.removeItem('profissionalLogado');
-    this.profissionalLogado = null;
-    this.router.navigate(['/login']);
-  }
+  sair() { localStorage.removeItem('profissionalLogado'); this.profissionalLogado = null; this.router.navigate(['/login']); }
+  getDataMinima() { return new Date().toISOString().split('T')[0]; }
 
-  getDataMinima(): string { return new Date().toISOString().split('T')[0]; }
-
-  validarData(event: any) {
-    const d = new Date(event.target.value + 'T00:00:00');
-    if (d.getDay() === 0) {
-      Swal.fire('Erro', 'Não funcionamos aos domingos. Selecione outro dia.', 'error');
-      event.target.value = '';
+  validarData(ev: any) {
+    if (new Date(ev.target.value + 'T00:00:00').getDay() === 0) {
+      Swal.fire({ title: 'Domingo fechado', text: 'Não funcionamos aos domingos.', icon: 'error', confirmButtonColor: '#BC9E5F' });
+      ev.target.value = '';
       if (this.agendamentoEditando) this.agendamentoEditando.data = '';
     }
   }
@@ -310,57 +423,24 @@ export class BarbeiroComponent implements OnInit {
     return `${dia}/${mes}/${ano}`;
   }
 
-  formatarValor(agendamento: Agendamento): string {
-    const val = agendamento.preco || agendamento.profissionalServicoEntity.preco || 0;
-    return Number(val).toFixed(2);
+  formatarValor(ag: Agendamento): string {
+    return Number(ag.preco || ag.profissionalServicoEntity.preco || 0).toFixed(2);
   }
 
-  getServico(agendamento: Agendamento): string {
-    return agendamento.observacoes || agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A';
+  formatarTelefone(ev: any) {
+    let v = ev.target.value.replace(/\D/g, '');
+    if (v.length >= 11) v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    else if (v.length >= 10) v = v.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    else if (v.length >= 6)  v = v.replace(/(\d{2})(\d{4})/, '($1) $2');
+    else if (v.length >= 2)  v = v.replace(/(\d{2})/, '($1) ');
+    ev.target.value = v;
+    this.novoAgendamento.telefone = v;
   }
 
-  // ── Métodos da seção Caixa ────────────────────────────────────────────────
+  getServico(ag: Agendamento): string { return ag.observacoes || ag.profissionalServicoEntity.servicoEntity?.descricao || 'N/A'; }
 
-  private getAllAgendamentos(): Agendamento[] {
-    return [...this.agendamentos, ...this.historico];
-  }
-
-  getCaixaResumo() {
-    const todos = this.getAllAgendamentos();
-    const concluidos = todos.filter(a => a.status === 'CONCLUIDO');
-    const cancelados = todos.filter(a => a.status === 'CANCELADO');
-    const faturamento = concluidos.reduce((acc, a) => acc + (a.preco || a.profissionalServicoEntity.preco || 0), 0);
-    const ticket = concluidos.length > 0 ? faturamento / concluidos.length : 0;
-    return {
-      faturamentoTotal: faturamento.toFixed(2),
-      totalAtendimentos: concluidos.length,
-      ticketMedio: ticket.toFixed(2),
-      totalCancelados: cancelados.length
-    };
-  }
-
-  getCaixaServicos(): { nome: string; quantidade: number; receita: string }[] {
-    const concluidos = this.getAllAgendamentos().filter(a => a.status === 'CONCLUIDO');
-    const mapa = new Map<string, { quantidade: number; receita: number }>();
-    concluidos.forEach(a => {
-      const nome = this.getServico(a);
-      const preco = a.preco || a.profissionalServicoEntity.preco || 0;
-      const atual = mapa.get(nome) || { quantidade: 0, receita: 0 };
-      mapa.set(nome, { quantidade: atual.quantidade + 1, receita: atual.receita + preco });
-    });
-    return Array.from(mapa.entries())
-      .map(([nome, v]) => ({ nome, quantidade: v.quantidade, receita: v.receita.toFixed(2) }))
-      .sort((a, b) => b.quantidade - a.quantidade);
-  }
-
-  getAtendimentosRecentes(): Agendamento[] {
-    return this.getAllAgendamentos()
-      .filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO')
-      .sort((a, b) => {
-        const da = (a.data || '') + (a.horario || '');
-        const db = (b.data || '') + (b.horario || '');
-        return db.localeCompare(da);
-      })
-      .slice(0, 20);
+  getMaxBarValue(): number {
+    const dados = this.getCaixaGraficoData();
+    return Math.max(...dados.map(d => d.faturamento), 1);
   }
 }

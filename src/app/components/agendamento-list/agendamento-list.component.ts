@@ -7,6 +7,7 @@ import { AgendamentoComponent } from '../agendamento/agendamento/agendamento-for
 import { AgendamentoService } from '../../services/agendamento/agendamento.service';
 import { ClienteService } from '../../services/cliente/cliente.service';
 import { NotificacaoService } from '../../services/notificacao.service';
+import { ProfissionalservicoService } from '../../services/profissionalservico/profissionalservico.service';
 import { Agendamento } from '../../models/agendamento/agendamento';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -19,12 +20,20 @@ import Swal from 'sweetalert2';
   styleUrl: './agendamento-list.component.scss'
 })
 export class AgendamentoListComponent implements OnInit {
-  agendamentos: Agendamento[] = [];
+  agendamentos: Agendamento[] = [];          // apenas PENDENTES
+  historico: Agendamento[] = [];             // CONCLUIDO + CANCELADO
   agendamentoEditando: Agendamento | null = null;
   mostrarFormEdicao = false;
   editandoDados = false;
   dadosEdicao = { nome: '', sobrenome: '', celular: '' };
-  
+  menuAberto = false;
+  secaoAtiva = 'agendamentos';
+  showModalAgendamento = false;
+
+  // Filtros histórico
+  filtroHistorico = '';
+  filtroStatusHistorico = '';
+
   servicosDisponiveis = [
     { nome: 'Cabelo e barba', preco: 60.00 },
     { nome: 'Degrade e sobrancelha', preco: 45.00 },
@@ -35,8 +44,12 @@ export class AgendamentoListComponent implements OnInit {
     { nome: 'Barba', preco: 35.00 },
     { nome: 'Sobrancelha', preco: 10.00 }
   ];
-  
-  horariosDisponiveis = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'];
+
+  horariosDisponiveis = [
+    '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+    '14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30',
+    '18:00','18:30','19:00','19:30','20:00','20:30'
+  ];
   horariosLivres: string[] = [];
 
   constructor(
@@ -44,348 +57,243 @@ export class AgendamentoListComponent implements OnInit {
     private clienteService: ClienteService,
     private authService: AuthService,
     private notificacaoService: NotificacaoService,
+    private profissionalServicoService: ProfissionalservicoService,
     private router: Router
   ) {}
 
   ngOnInit() {
-    this.carregarAgendamentos();
+    this.carregarTodos();
     this.verificarNotificacoes();
   }
 
+  // ── Carregamento ─────────────────────────────────────────────────────────────
+  carregarTodos() {
+    const cliente = this.authService.getClienteLogado();
+    if (!cliente) { this.router.navigate(['/login']); return; }
+
+    this.agendamentoService.listar().subscribe({
+      next: (lista) => {
+        const meus = lista.filter(a => a.clienteEntity.id === cliente.id);
+
+        // Verifica automaticamente se algum agendamento passou da hora e atualiza status
+        const agora = new Date();
+        const atualizacoes: Promise<void>[] = [];
+
+        meus.forEach(ag => {
+          if (ag.status === 'PENDENTE' && ag.data && ag.horario) {
+            const [ano, mes, dia] = ag.data.split('-').map(Number);
+            const [hora, min] = ag.horario.split(':').map(Number);
+            const dtAg = new Date(ano, mes - 1, dia, hora, min);
+            if (dtAg < agora) {
+              // Passou da hora — marca como concluído via PATCH
+              const p = this.agendamentoService.patch(ag.id!, { status: 'CONCLUIDO' }).toPromise()
+                .then(() => { ag.status = 'CONCLUIDO'; })
+                .catch(() => {});
+              atualizacoes.push(p);
+            }
+          }
+        });
+
+        Promise.all(atualizacoes).then(() => {
+          this.agendamentos = meus.filter(a => a.status === 'PENDENTE');
+          this.historico    = meus.filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO');
+        });
+      },
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao carregar agendamentos', icon: 'error', confirmButtonColor: '#BC9E5F' })
+    });
+  }
+
+  get historicoFiltrado(): Agendamento[] {
+    let res = [...this.historico];
+    if (this.filtroHistorico.trim()) {
+      const b = this.filtroHistorico.toLowerCase();
+      res = res.filter(a =>
+        (a.observacoes || a.profissionalServicoEntity.servicoEntity?.descricao || '').toLowerCase().includes(b) ||
+        (a.data || '').includes(b)
+      );
+    }
+    if (this.filtroStatusHistorico) res = res.filter(a => a.status === this.filtroStatusHistorico);
+    return res.sort((a, b) => (b.data + b.horario).localeCompare(a.data + a.horario));
+  }
+
+  // ── Notificações ─────────────────────────────────────────────────────────────
   verificarNotificacoes() {
     const cliente = this.authService.getClienteLogado();
     if (!cliente) return;
-    
     const notificacoes = this.notificacaoService.obterNotificacoesCliente(cliente.id);
-    
     if (notificacoes.length > 0) {
-      const mensagens = notificacoes.map(n => n.mensagem).join('\n\n');
-      
+      const mensagens = notificacoes.map(n => `• ${n.mensagem}`).join('\n');
       Swal.fire({
-        title: 'Notificações',
+        title: 'Você tem notificações',
         text: mensagens,
         icon: 'info',
-        confirmButtonText: 'OK'
-      }).then(() => {
-        this.notificacaoService.marcarComoLida(cliente.id);
-      });
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#BC9E5F'
+      }).then(() => this.notificacaoService.marcarComoLida(cliente.id));
     }
   }
 
-  carregarAgendamentos() {
-    const cliente = this.authService.getClienteLogado();
-    
-    if (!cliente) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    
-    this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        this.agendamentos = agendamentos.filter(a => 
-          a.clienteEntity.id === cliente.id && 
-          a.status === 'PENDENTE'
-        );
-      },
-      error: (error) => {
-        Swal.fire('Erro', 'Erro ao carregar agendamentos', 'error');
-      }
+  // ── Cancelar agendamento (cliente) ────────────────────────────────────────────
+  cancelarAgendamento(ag: Agendamento) {
+    Swal.fire({
+      title: 'Cancelar agendamento?',
+      html: `<p style="color:#4a4540">Você está cancelando:<br><strong>${ag.observacoes || ag.profissionalServicoEntity.servicoEntity?.descricao}</strong><br>em ${this.formatarData(ag.data)} às ${ag.horario}</p>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, cancelar',
+      cancelButtonText: 'Voltar',
+      confirmButtonColor: '#9a2020',
+      cancelButtonColor: '#BC9E5F'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.agendamentoService.patch(ag.id!, { status: 'CANCELADO' }).subscribe({
+        next: () => {
+          this.agendamentos = this.agendamentos.filter(a => a.id !== ag.id);
+          ag.status = 'CANCELADO';
+          this.historico = [ag, ...this.historico];
+          Swal.fire({ title: 'Cancelado', text: 'Seu agendamento foi cancelado.', icon: 'success', confirmButtonColor: '#BC9E5F' });
+        },
+        error: () => Swal.fire({ title: 'Erro', text: 'Não foi possível cancelar.', icon: 'error', confirmButtonColor: '#BC9E5F' })
+      });
     });
   }
 
-  menuAberto = false;
-  secaoAtiva = 'agendamentos';
-
-  toggleMenu() {
-    this.menuAberto = !this.menuAberto;
-  }
-
-  mostrarSecao(secao: string) {
-    this.secaoAtiva = secao;
-    if (secao === 'dados') {
-      const cliente = this.getClienteLogado();
-      if (cliente) {
-        this.dadosEdicao = {
-          nome: cliente.nome,
-          sobrenome: cliente.sobrenome,
-          celular: cliente.celular
-        };
-      }
-    }
-  }
-
-  showModalAgendamento = false;
-
-
-
-  abrirModalAgendamento() {
-    this.showModalAgendamento = true;
-  }
-
-  fecharModalAgendamento() {
-    this.showModalAgendamento = false;
-  }
-
-  editar(agendamento: Agendamento) {
-    if (!agendamento.id) return;
-    this.agendamentoEditando = { ...agendamento };
-    this.buscarHorariosLivres(agendamento.data, agendamento.id);
+  // ── Editar ────────────────────────────────────────────────────────────────────
+  editar(ag: Agendamento) {
+    if (!ag.id) return;
+    this.agendamentoEditando = { ...ag };
+    this.buscarHorariosLivres(ag.data, ag.id);
     this.mostrarFormEdicao = true;
   }
-  
+
   buscarHorariosLivres(data: string, agendamentoId?: number) {
-    const dataSelecionada = new Date(data + 'T00:00:00');
-    const hoje = new Date();
-    
-    // Verifica se é domingo
-    if (dataSelecionada.getDay() === 0) {
-      this.horariosLivres = [];
-      return;
-    }
-    
+    const d = new Date(data + 'T00:00:00');
+    if (d.getDay() === 0) { this.horariosLivres = []; return; }
     this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        const agendamentosNaData = agendamentos.filter(a => 
-          a.data === data && a.id !== agendamentoId && a.status === 'PENDENTE'
-        );
-        
-        const horariosOcupados = agendamentosNaData.map(a => a.horario);
-        let horariosDisponiveis = this.horariosDisponiveis.filter(h => !horariosOcupados.includes(h));
-        
-        // Se for hoje, remove horários que já passaram
-        if (dataSelecionada.toDateString() === hoje.toDateString()) {
+      next: (ags) => {
+        const ocupados = ags.filter(a => a.data === data && a.id !== agendamentoId && a.status === 'PENDENTE').map(a => a.horario);
+        let livres = this.horariosDisponiveis.filter(h => !ocupados.includes(h));
+        const hoje = new Date();
+        if (d.toDateString() === hoje.toDateString()) {
           const agora = hoje.getHours() * 60 + hoje.getMinutes();
-          horariosDisponiveis = horariosDisponiveis.filter(h => {
-            const [hora, minuto] = h.split(':').map(Number);
-            const horarioMinutos = hora * 60 + minuto;
-            return horarioMinutos > agora;
-          });
+          livres = livres.filter(h => { const [hr, mn] = h.split(':').map(Number); return hr * 60 + mn > agora; });
         }
-        
-        this.horariosLivres = horariosDisponiveis;
+        this.horariosLivres = livres;
       },
-      error: () => {
-        this.horariosLivres = [...this.horariosDisponiveis];
-      }
+      error: () => { this.horariosLivres = [...this.horariosDisponiveis]; }
     });
   }
-  
+
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
-    
-    // Buscar o ProfissionalServicoEntity correto do backend
-    this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        // Pegar qualquer agendamento para encontrar profissional-serviços disponíveis
-        const agendamentoExemplo = agendamentos[0];
-        if (agendamentoExemplo) {
-          // Fazer requisição para buscar todos os profissional-serviços
-          fetch('http://3.133.62.14:8080/api/profissionais/servicos')
-            .then(response => response.json())
-            .then((profServicos: any[]) => {
-              const profServicoCorreto = profServicos.find(ps => 
-                ps.servicoEntity?.descricao === novoServico
-              );
-              
-              if (profServicoCorreto && this.agendamentoEditando) {
-                this.agendamentoEditando.profissionalServicoEntity = profServicoCorreto;
-              }
-            })
-            .catch(error => console.error('Erro ao buscar profissional-serviços:', error));
-        }
+    this.profissionalServicoService.listar().subscribe({
+      next: (ps) => {
+        const found = ps.find((p: any) => p.servicoEntity?.descricao === novoServico);
+        if (found && this.agendamentoEditando) this.agendamentoEditando.profissionalServicoEntity = found;
       }
     });
   }
 
   salvarEdicao() {
-    if (!this.agendamentoEditando || !this.agendamentoEditando.id) return;
-    
-    const dataSelecionada = new Date(this.agendamentoEditando.data + 'T00:00:00');
-    const hoje = new Date();
-    
-    if (dataSelecionada < hoje && dataSelecionada.toDateString() !== hoje.toDateString()) {
-      Swal.fire('Erro', 'Não é possível agendar em data anterior a hoje', 'error');
-      return;
+    if (!this.agendamentoEditando?.id) return;
+    const d = new Date(this.agendamentoEditando.data + 'T00:00:00');
+    if (d.getDay() === 0) { Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' }); return; }
+    if (d < new Date() && d.toDateString() !== new Date().toDateString()) {
+      Swal.fire({ title: 'Erro', text: 'Não é possível agendar em data passada', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
     }
-    
-    if (dataSelecionada.getDay() === 0) {
-      Swal.fire('Erro', 'Não funcionamos aos domingos', 'error');
-      return;
-    }
-    
-    // Limpar objeto para envio - remover campos que causam problemas de serialização
-    const agendamentoLimpo = {
-      id: this.agendamentoEditando.id,
-      data: this.agendamentoEditando.data,
-      local: this.agendamentoEditando.local,
-      horario: this.agendamentoEditando.horario,
+    const limpo = {
+      id: this.agendamentoEditando.id, data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local, horario: this.agendamentoEditando.horario,
       status: this.agendamentoEditando.status,
       observacoes: this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '',
       preco: this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0,
-      clienteEntity: {
-        id: this.agendamentoEditando.clienteEntity.id
-      },
-      profissionalServicoEntity: {
-        id: this.agendamentoEditando.profissionalServicoEntity.id
-      }
+      clienteEntity: { id: this.agendamentoEditando.clienteEntity.id },
+      profissionalServicoEntity: { id: this.agendamentoEditando.profissionalServicoEntity.id }
     };
-    
-    console.log('=== DADOS LIMPOS SENDO ENVIADOS ===');
-    console.log('Agendamento limpo:', JSON.stringify(agendamentoLimpo, null, 2));
-    
-    this.agendamentoService.atualizar(this.agendamentoEditando.id, agendamentoLimpo).subscribe({
+    this.agendamentoService.atualizar(this.agendamentoEditando.id, limpo).subscribe({
       next: () => {
-        Swal.fire('Sucesso', 'Agendamento atualizado!', 'success');
-        this.cancelarEdicao();
-        this.carregarAgendamentos();
+        Swal.fire({ title: 'Atualizado!', text: 'Agendamento alterado com sucesso.', icon: 'success', confirmButtonColor: '#BC9E5F' });
+        this.cancelarEdicao(); this.carregarTodos();
       },
-      error: (error) => {
-        console.error('=== ERRO DETALHADO ===');
-        console.error('Status:', error.status);
-        console.error('Error completo:', error);
-        console.error('Error body:', error.error);
-        Swal.fire('Erro', 'Erro ao atualizar agendamento', 'error');
-      }
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao atualizar agendamento', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
   }
 
-  cancelarEdicao() {
-    this.agendamentoEditando = null;
-    this.mostrarFormEdicao = false;
+  cancelarEdicao() { this.agendamentoEditando = null; this.mostrarFormEdicao = false; }
+
+  // ── Navegação ─────────────────────────────────────────────────────────────────
+  toggleMenu() { this.menuAberto = !this.menuAberto; }
+
+  mostrarSecao(secao: string) {
+    this.secaoAtiva = secao;
+    if (secao === 'dados') {
+      const c = this.getClienteLogado();
+      if (c) this.dadosEdicao = { nome: c.nome, sobrenome: c.sobrenome, celular: c.celular };
+    }
+    if (secao === 'historico' || secao === 'agendamentos') this.carregarTodos();
   }
 
-  excluir(agendamento: Agendamento) {
-    if (!agendamento.id) return;
-    
-    Swal.fire({
-      title: 'Confirmar exclusão',
-      text: 'Deseja realmente excluir este agendamento?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, excluir',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.agendamentoService.deletar(agendamento.id!).subscribe({
-          next: () => {
-            this.agendamentos = this.agendamentos.filter(a => a.id !== agendamento.id);
-            Swal.fire('Sucesso', 'Agendamento excluído!', 'success');
-          },
-          error: (error) => {
-            console.log('Erro capturado:', error);
-            if (error.status === 0 || error.status === 200) {
-              this.agendamentos = this.agendamentos.filter(a => a.id !== agendamento.id);
-              Swal.fire('Sucesso', 'Agendamento excluído!', 'success');
-            } else {
-              Swal.fire('Erro', 'Erro ao excluir agendamento', 'error');
-            }
-          }
-        });
-      }
-    });
+  abrirModalAgendamento() { this.showModalAgendamento = true; }
+
+  onModalAgendamentoClosed() {
+    this.showModalAgendamento = false;
+    this.carregarTodos(); // recarrega para refletir novo agendamento
   }
 
-  historico: Agendamento[] = [];
-
-  getHistorico() {
-    const cliente = this.authService.getClienteLogado();
-    if (!cliente) return [];
-    
-    this.agendamentoService.listar().subscribe({
-      next: (agendamentos) => {
-        this.historico = agendamentos.filter(a => 
-          a.clienteEntity.id === cliente.id && 
-          (a.status === 'CONCLUIDO' || a.status === 'CANCELADO')
-        );
-      }
-    });
-    
-    return this.historico;
-  }
-
-  getClienteLogado() {
-    return this.authService.getClienteLogado();
-  }
-
-  sair() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
+  // ── Meus Dados ────────────────────────────────────────────────────────────────
+  getClienteLogado() { return this.authService.getClienteLogado(); }
 
   iniciarEdicao() {
-    const cliente = this.getClienteLogado();
-    if (cliente) {
-      this.dadosEdicao = {
-        nome: cliente.nome,
-        sobrenome: cliente.sobrenome,
-        celular: cliente.celular
-      };
-      this.editandoDados = true;
-    }
+    const c = this.getClienteLogado();
+    if (c) { this.dadosEdicao = { nome: c.nome, sobrenome: c.sobrenome, celular: c.celular }; this.editandoDados = true; }
   }
 
   salvarDados() {
-    const cliente = this.getClienteLogado();
-    if (!cliente || !cliente.id) return;
-
-    const clienteAtualizado = {
-      id: cliente.id,
-      nome: this.dadosEdicao.nome,
-      sobrenome: this.dadosEdicao.sobrenome,
-      celular: this.dadosEdicao.celular
-    };
-
-    this.clienteService.atualizar(cliente.id, clienteAtualizado).subscribe({
-      next: (response) => {
-        this.authService.login(response);
-        this.editandoDados = false;
-        Swal.fire('Sucesso', 'Dados atualizados com sucesso!', 'success');
-      },
-      error: () => {
-        Swal.fire('Erro', 'Erro ao atualizar dados', 'error');
-      }
+    const c = this.getClienteLogado();
+    if (!c?.id) return;
+    this.clienteService.atualizar(c.id, { ...c, ...this.dadosEdicao }).subscribe({
+      next: (r) => { this.authService.login(r); this.editandoDados = false; Swal.fire({ title: 'Atualizado!', text: 'Dados salvos com sucesso.', icon: 'success', confirmButtonColor: '#BC9E5F' }); },
+      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao atualizar dados', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
   }
 
   cancelarEdicaoDados() {
     this.editandoDados = false;
-    const cliente = this.getClienteLogado();
-    if (cliente) {
-      this.dadosEdicao = {
-        nome: cliente.nome,
-        sobrenome: cliente.sobrenome,
-        celular: cliente.celular
-      };
-    }
+    const c = this.getClienteLogado();
+    if (c) this.dadosEdicao = { nome: c.nome, sobrenome: c.sobrenome, celular: c.celular };
+  }
+
+  sair() { this.authService.logout(); this.router.navigate(['/login']); }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  formatarData(data: string): string {
+    if (!data) return '-';
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  formatarValor(ag: Agendamento): string {
+    const v = ag.preco || ag.profissionalServicoEntity.preco || 0;
+    return Number(v).toFixed(2);
   }
 
   formatarTelefone(event: any) {
-    let valor = event.target.value.replace(/\D/g, '');
-    if (valor.length >= 11) {
-      valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    } else if (valor.length >= 10) {
-      valor = valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    } else if (valor.length >= 6) {
-      valor = valor.replace(/(\d{2})(\d{4})/, '($1) $2');
-    } else if (valor.length >= 2) {
-      valor = valor.replace(/(\d{2})/, '($1) ');
-    }
-    this.dadosEdicao.celular = valor;
+    let v = event.target.value.replace(/\D/g, '');
+    if (v.length >= 11) v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    else if (v.length >= 10) v = v.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    else if (v.length >= 6)  v = v.replace(/(\d{2})(\d{4})/, '($1) $2');
+    else if (v.length >= 2)  v = v.replace(/(\d{2})/, '($1) ');
+    this.dadosEdicao.celular = v;
   }
-  
-  getDataMinima(): string {
-    const hoje = new Date();
-    return hoje.toISOString().split('T')[0];
-  }
-  
+
+  getDataMinima(): string { return new Date().toISOString().split('T')[0]; }
+
   validarData(event: any) {
-    const dataSelecionada = new Date(event.target.value + 'T00:00:00');
-    if (dataSelecionada.getDay() === 0) {
-      Swal.fire('Erro', 'Não funcionamos aos domingos. Selecione outro dia.', 'error');
+    const d = new Date(event.target.value + 'T00:00:00');
+    if (d.getDay() === 0) {
+      Swal.fire({ title: 'Domingo fechado', text: 'Não funcionamos aos domingos.', icon: 'error', confirmButtonColor: '#BC9E5F' });
       event.target.value = '';
-      if (this.agendamentoEditando) {
-        this.agendamentoEditando.data = '';
-      }
+      if (this.agendamentoEditando) this.agendamentoEditando.data = '';
     }
   }
 }
