@@ -3,164 +3,325 @@
   <div class="container-fluid">
     <img src="assets/logo.png" alt="Logo" class="navbar-logo" />
     <a class="navbar-brand" href="#">PH Barbearia - Área do Barbeiro</a>
-
-    <button
-      class="navbar-toggler"
-      type="button"
-      (click)="toggleMenu()"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" (click)="toggleMenu()" aria-label="Toggle navigation">
       <i class="fas fa-bars"></i>
     </button>
-
-    <div
-      class="collapse navbar-collapse justify-content-end"
-      [class.show]="menuAberto"
-    >
+    <div class="collapse navbar-collapse justify-content-end" [class.show]="menuAberto">
       <div class="navbar-nav">
         <a class="nav-link" (click)="mostrarSecao('agendamentos')" [class.active]="secaoAtiva === 'agendamentos'">Agendamentos</a>
-        <a class="nav-link" (click)="mostrarSecao('historico')" [class.active]="secaoAtiva === 'historico'">Histórico</a>
-        <a class="nav-link" (click)="mostrarSecao('caixa')" [class.active]="secaoAtiva === 'caixa'">Caixa</a>
+        <a class="nav-link" (click)="mostrarSecao('historico')"    [class.active]="secaoAtiva === 'historico'">Histórico</a>
+        <a class="nav-link" (click)="mostrarSecao('caixa')"        [class.active]="secaoAtiva === 'caixa'">Caixa</a>
         <a class="btn-conta" (click)="sair()">Sair</a>
       </div>
     </div>
   </div>
 </nav>
 
-<div class="agendamento-container">
-  <div class="container">
-    @if (secaoAtiva === 'agendamentos') {
-      <h2 class="text-center mb-4">Todos os Agendamentos</h2>
-    }
-    @if (secaoAtiva === 'historico') {
-      <h2 class="text-center mb-4">Histórico de Atendimentos</h2>
-    }
-    @if (secaoAtiva === 'caixa') {
-      <h2 class="text-center mb-4">Relatório de Caixa</h2>
-    }
-    
-    @if (secaoAtiva === 'agendamentos') {
-    
-    <div class="table-responsive">
-      <table class="table table-striped table-hover">
-        <thead class="table-dark">
+<div class="pagina-container">
+
+  <!-- ── AGENDAMENTOS ───────────────────────────────────────────────────────── -->
+  @if (secaoAtiva === 'agendamentos') {
+  <div class="secao-wrapper">
+
+    <div class="secao-header">
+      <div class="secao-titulo">
+        <i class="fas fa-calendar-alt icone-titulo"></i>
+        <h2>Agendamentos Pendentes</h2>
+        <span class="badge-count">{{ agendamentosFiltrados.length }}</span>
+      </div>
+    </div>
+
+    <div class="filtros-bar">
+      <div class="filtro-busca">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar por nome ou serviço..."
+          [(ngModel)]="filtroTexto" class="input-busca" />
+      </div>
+      <div class="filtro-status">
+        <select [(ngModel)]="filtroStatus" class="select-filtro">
+          <option value="">Todos os status</option>
+          <option value="PENDENTE">Pendente</option>
+          <option value="CONCLUIDO">Concluído</option>
+          <option value="CANCELADO">Cancelado</option>
+        </select>
+      </div>
+      <button class="btn-limpar" (click)="limparFiltros()">
+        <i class="fas fa-times"></i> Limpar
+      </button>
+    </div>
+
+    <div class="tabela-container">
+      <div class="tabela-scroll">
+        <table class="tabela-agendamentos">
+          <thead>
+            <tr>
+              <th class="th-sortable" (click)="ordenarPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','ag') }}"></i></th>
+              <th>Telefone</th>
+              <th class="th-sortable" (click)="ordenarPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','ag') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','ag') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','ag') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','ag') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarPor('status')">Status <i class="fas {{ getIconeOrdenacao('status','ag') }}"></i></th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (agendamentosFiltrados.length === 0) {
+              <tr><td colspan="8" class="td-vazio"><i class="fas fa-calendar-times"></i><span>Nenhum agendamento encontrado</span></td></tr>
+            }
+            @for (ag of agendamentosFiltrados; track ag.id) {
+            <tr class="linha-agendamento">
+              <td class="td-nome">
+                <span class="avatar-inicial">{{ (ag.clienteEntity.nome || 'N')[0].toUpperCase() }}</span>
+                {{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}
+              </td>
+              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular || 'N/A' }}</td>
+              <td class="td-servico"><span class="tag-servico">{{ getServico(ag) }}</span></td>
+              <td class="td-data">{{ formatarData(ag.data) }}</td>
+              <td class="td-hora"><i class="fas fa-clock icone-hora"></i>{{ ag.horario }}</td>
+              <td class="td-valor">R$ {{ formatarValor(ag) }}</td>
+              <td>
+                <span class="badge-status" [ngClass]="{
+                  'status-pendente':  ag.status === 'PENDENTE',
+                  'status-concluido': ag.status === 'CONCLUIDO',
+                  'status-cancelado': ag.status === 'CANCELADO'
+                }">{{ ag.status }}</span>
+              </td>
+              <td class="td-acoes">
+                @if (ag.id) {
+                  <button class="btn-acao btn-editar" (click)="editar(ag)" title="Editar"><i class="fas fa-pen"></i></button>
+                  <button class="btn-acao btn-excluir" (click)="excluir(ag)" title="Excluir"><i class="fas fa-trash"></i></button>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- ── HISTÓRICO ──────────────────────────────────────────────────────────── -->
+  @if (secaoAtiva === 'historico') {
+  <div class="secao-wrapper">
+
+    <div class="secao-header">
+      <div class="secao-titulo">
+        <i class="fas fa-history icone-titulo"></i>
+        <h2>Histórico de Atendimentos</h2>
+        <span class="badge-count">{{ historicoFiltrado.length }}</span>
+      </div>
+    </div>
+
+    <div class="filtros-bar">
+      <div class="filtro-busca">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar por nome ou serviço..."
+          [(ngModel)]="filtroTextoHistorico" class="input-busca" />
+      </div>
+    </div>
+
+    <div class="tabela-container">
+      <div class="tabela-scroll">
+        <table class="tabela-agendamentos">
+          <thead>
+            <tr>
+              <th class="th-sortable" (click)="ordenarHistoricoPor('nome')">Cliente <i class="fas {{ getIconeOrdenacao('nome','hist') }}"></i></th>
+              <th>Telefone</th>
+              <th class="th-sortable" (click)="ordenarHistoricoPor('servico')">Serviço <i class="fas {{ getIconeOrdenacao('servico','hist') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarHistoricoPor('data')">Data <i class="fas {{ getIconeOrdenacao('data','hist') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarHistoricoPor('horario')">Hora <i class="fas {{ getIconeOrdenacao('horario','hist') }}"></i></th>
+              <th class="th-sortable" (click)="ordenarHistoricoPor('valor')">Valor <i class="fas {{ getIconeOrdenacao('valor','hist') }}"></i></th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (historicoFiltrado.length === 0) {
+              <tr><td colspan="7" class="td-vazio"><i class="fas fa-history"></i><span>Nenhum atendimento no histórico</span></td></tr>
+            }
+            @for (ag of historicoFiltrado; track ag.id) {
+            <tr class="linha-agendamento">
+              <td class="td-nome">
+                <span class="avatar-inicial avatar-historico">{{ (ag.clienteEntity.nome || 'N')[0].toUpperCase() }}</span>
+                {{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}
+              </td>
+              <td class="td-telefone"><i class="fas fa-phone-alt icone-cel"></i>{{ ag.clienteEntity.celular || 'N/A' }}</td>
+              <td class="td-servico"><span class="tag-servico">{{ getServico(ag) }}</span></td>
+              <td class="td-data">{{ formatarData(ag.data) }}</td>
+              <td class="td-hora"><i class="fas fa-clock icone-hora"></i>{{ ag.horario }}</td>
+              <td class="td-valor">R$ {{ formatarValor(ag) }}</td>
+              <td><span class="badge-status status-concluido">{{ ag.status }}</span></td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- ── CAIXA ─────────────────────────────────────────────────────────────── -->
+  @if (secaoAtiva === 'caixa') {
+  <div class="secao-wrapper">
+
+    <div class="secao-header">
+      <div class="secao-titulo">
+        <i class="fas fa-cash-register icone-titulo"></i>
+        <h2>Relatório de Caixa</h2>
+        <span class="badge-count">{{ getCaixaResumo().totalAtendimentos }} atendimentos</span>
+      </div>
+    </div>
+
+    <!-- Cards de resumo -->
+    <div class="caixa-grid">
+      <div class="caixa-card card-faturamento">
+        <i class="fas fa-dollar-sign caixa-card-icone"></i>
+        <div class="caixa-card-label">Faturamento total</div>
+        <div class="caixa-card-valor">R$ {{ getCaixaResumo().faturamentoTotal }}</div>
+      </div>
+      <div class="caixa-card card-atendimentos">
+        <i class="fas fa-check-circle caixa-card-icone"></i>
+        <div class="caixa-card-label">Atendimentos concluídos</div>
+        <div class="caixa-card-valor">{{ getCaixaResumo().totalAtendimentos }}</div>
+      </div>
+      <div class="caixa-card card-ticket">
+        <i class="fas fa-receipt caixa-card-icone"></i>
+        <div class="caixa-card-label">Ticket médio</div>
+        <div class="caixa-card-valor">R$ {{ getCaixaResumo().ticketMedio }}</div>
+      </div>
+      <div class="caixa-card card-cancelados">
+        <i class="fas fa-ban caixa-card-icone"></i>
+        <div class="caixa-card-label">Cancelados</div>
+        <div class="caixa-card-valor">{{ getCaixaResumo().totalCancelados }}</div>
+      </div>
+    </div>
+
+    <!-- Tabela de serviços mais realizados -->
+    <div class="caixa-secao-titulo">
+      <i class="fas fa-chart-bar"></i> Serviços mais realizados
+    </div>
+
+    <div class="caixa-tabela-container">
+      <table class="caixa-tabela">
+        <thead>
           <tr>
-            <th scope="col">Cliente</th>
-            <th scope="col">Telefone</th>
-            <th scope="col">Serviço</th>
-            <th scope="col">Data</th>
-            <th scope="col">Hora</th>
-            <th scope="col">Local</th>
-            <th scope="col">Valor</th>
-            <th scope="col">Status</th>
-            <th scope="col">Ações</th>
+            <th>Serviço</th>
+            <th>Qtd. realizada</th>
+            <th>Receita gerada</th>
           </tr>
         </thead>
         <tbody>
-          @for (agendamento of agendamentos; track agendamento.id) {
+          @if (getCaixaServicos().length === 0) {
+            <tr><td colspan="3" class="caixa-vazio"><i class="fas fa-chart-bar"></i><span>Nenhum dado disponível</span></td></tr>
+          }
+          @for (item of getCaixaServicos(); track item.nome) {
           <tr>
-            <td>{{ agendamento.clienteEntity.nome || 'N/A' }} {{ agendamento.clienteEntity.sobrenome || '' }}</td>
-            <td>{{ agendamento.clienteEntity.celular || 'N/A' }}</td>
-            <td>{{ agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
-            <td>{{ agendamento.data }}</td>
-            <td>{{ agendamento.horario }}</td>
-            <td>{{ agendamento.local }}</td>
-            <td>R$ {{ agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
-            <td>{{ agendamento.status }}</td>
+            <td><span class="caixa-servico-tag">{{ item.nome }}</span></td>
+            <td>{{ item.quantidade }}x</td>
+            <td class="caixa-valor-positivo">R$ {{ item.receita }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tabela de atendimentos recentes -->
+    <div class="caixa-secao-titulo">
+      <i class="fas fa-list-alt"></i> Atendimentos recentes
+    </div>
+
+    <div class="caixa-tabela-container">
+      <table class="caixa-tabela">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Serviço</th>
+            <th>Data</th>
+            <th>Hora</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (getAtendimentosRecentes().length === 0) {
+            <tr><td colspan="6" class="caixa-vazio"><i class="fas fa-list-alt"></i><span>Nenhum atendimento registrado</span></td></tr>
+          }
+          @for (ag of getAtendimentosRecentes(); track ag.id) {
+          <tr>
+            <td>{{ ag.clienteEntity.nome || 'N/A' }} {{ ag.clienteEntity.sobrenome || '' }}</td>
+            <td><span class="caixa-servico-tag">{{ getServico(ag) }}</span></td>
+            <td>{{ formatarData(ag.data) }}</td>
+            <td>{{ ag.horario }}</td>
+            <td class="caixa-valor-positivo">R$ {{ formatarValor(ag) }}</td>
             <td>
-              <div class="actions-column">
-                @if (agendamento.id) {
-                  <button class="btn btn-edit" (click)="editar(agendamento)">Editar</button>
-                  <button class="btn btn-delete" (click)="excluir(agendamento)">Excluir</button>
-                }
-              </div>
+              <span class="badge-status" [ngClass]="{
+                'status-pendente':  ag.status === 'PENDENTE',
+                'status-concluido': ag.status === 'CONCLUIDO',
+                'status-cancelado': ag.status === 'CANCELADO'
+              }">{{ ag.status }}</span>
             </td>
           </tr>
           }
         </tbody>
       </table>
     </div>
-    }
-    
-    @if (secaoAtiva === 'historico') {
-    <div class="table-responsive">
-      <table class="table table-striped table-hover">
-        <thead class="table-dark">
-          <tr>
-            <th scope="col">Cliente</th>
-            <th scope="col">Telefone</th>
-            <th scope="col">Serviço</th>
-            <th scope="col">Data</th>
-            <th scope="col">Hora</th>
-            <th scope="col">Local</th>
-            <th scope="col">Valor</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (agendamento of historico; track agendamento.id) {
-          <tr>
-            <td>{{ agendamento.clienteEntity.nome || 'N/A' }} {{ agendamento.clienteEntity.sobrenome || '' }}</td>
-            <td>{{ agendamento.clienteEntity.celular || 'N/A' }}</td>
-            <td>{{ agendamento.profissionalServicoEntity.servicoEntity?.descricao || 'N/A' }}</td>
-            <td>{{ agendamento.data }}</td>
-            <td>{{ agendamento.horario }}</td>
-            <td>{{ agendamento.local }}</td>
-            <td>R$ {{ agendamento.profissionalServicoEntity.preco || '0,00' }}</td>
-            <td><span class="badge bg-success">{{ agendamento.status }}</span></td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-    
-    @if (secaoAtiva === 'caixa') {
-    <div class="alert alert-success text-center">
-      <h4>Relatório de Caixa</h4>
-      <p>Funcionalidade em desenvolvimento</p>
-    </div>
-    }
+
   </div>
+  }
+
 </div>
 
-<!-- Formulário de Edição -->
+<!-- ── MODAL EDIÇÃO ────────────────────────────────────────────────────────── -->
 @if (mostrarFormEdicao && agendamentoEditando) {
 <div class="modal-overlay" (click)="cancelarEdicao()">
   <div class="modal-edicao" (click)="$event.stopPropagation()">
-    <h3>Editar Agendamento</h3>
-    
+    <div class="modal-header-custom">
+      <i class="fas fa-pen"></i>
+      <h3>Editar Agendamento</h3>
+    </div>
+
     <div class="form-group">
-      <label>Serviço:</label>
-      <select class="form-control" [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || ''" (change)="atualizarServico($any($event.target).value)">
+      <label>Serviço</label>
+      <select class="form-control"
+        [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || ''"
+        (change)="atualizarServico($any($event.target).value)">
         @for (servico of servicosDisponiveis; track servico.nome) {
-          <option [value]="servico.nome" [selected]="servico.nome === agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao">{{ servico.nome }} - R$ {{ servico.preco.toFixed(2) }}</option>
+          <option [value]="servico.nome"
+            [selected]="servico.nome === agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao">
+            {{ servico.nome }} — R$ {{ servico.preco.toFixed(2) }}
+          </option>
         }
       </select>
     </div>
-    
+
     <div class="form-group">
-      <label>Data:</label>
-      <input type="date" class="form-control" [(ngModel)]="agendamentoEditando.data" [min]="getDataMinima()" (change)="validarData($event); buscarHorariosLivres(agendamentoEditando.data, agendamentoEditando.id)" />
+      <label>Data</label>
+      <input type="date" class="form-control" [(ngModel)]="agendamentoEditando.data"
+        [min]="getDataMinima()"
+        (change)="validarData($event); buscarHorariosLivres(agendamentoEditando.data, agendamentoEditando.id)" />
     </div>
-    
+
     <div class="form-group">
-      <label>Horário:</label>
+      <label>Horário</label>
       <select class="form-control" [(ngModel)]="agendamentoEditando.horario">
         @for (horario of horariosLivres; track horario) {
           <option [value]="horario">{{ horario }}</option>
         }
       </select>
     </div>
-    
+
     <div class="form-group">
-      <label>Valor:</label>
-      <input type="text" class="form-control" [value]="'R$ ' + (agendamentoEditando.profissionalServicoEntity.preco?.toFixed(2) || '0,00')" readonly />
+      <label>Valor</label>
+      <input type="text" class="form-control"
+        [value]="'R$ ' + (agendamentoEditando.profissionalServicoEntity.preco?.toFixed(2) || '0,00')" readonly />
     </div>
-    
+
     <div class="form-actions">
-      <button class="btn btn-primary" (click)="salvarEdicao()">Salvar</button>
-      <button class="btn btn-secondary" (click)="cancelarEdicao()">Cancelar</button>
+      <button class="btn-modal-salvar" (click)="salvarEdicao()"><i class="fas fa-check"></i> Salvar</button>
+      <button class="btn-modal-cancelar" (click)="cancelarEdicao()"><i class="fas fa-times"></i> Cancelar</button>
     </div>
   </div>
 </div>
