@@ -31,7 +31,6 @@ export class AgendamentoListComponent implements OnInit {
   secaoAtiva = 'agendamentos';
   showModalAgendamento = false;
 
-  // Filtros histórico
   filtroHistorico = '';
   filtroStatusHistorico = '';
 
@@ -43,7 +42,6 @@ export class AgendamentoListComponent implements OnInit {
     '18:00','18:30','19:00','19:30','20:00','20:30'
   ];
   horariosLivres: string[] = [];
-
   profissionalServicos: any[] = [];
 
   constructor(
@@ -61,12 +59,10 @@ export class AgendamentoListComponent implements OnInit {
     this.verificarNotificacoes();
   }
 
-  // ── Carrega serviços reais do backend ─────────────────────────────────────────
   carregarServicosDisponiveis() {
     this.profissionalServicoService.listar().subscribe({
       next: (ps: any[]) => {
         this.profissionalServicos = ps;
-        // Monta lista única de serviços com preço
         const vistos = new Set<string>();
         this.servicosDisponiveis = ps
           .filter((p: any) => {
@@ -78,7 +74,6 @@ export class AgendamentoListComponent implements OnInit {
           .map((p: any) => ({ nome: p.servicoEntity.descricao, preco: p.preco || 0 }));
       },
       error: () => {
-        // Fallback com valores padrão
         this.servicosDisponiveis = [
           { nome: 'Cabelo e barba', preco: 60.00 },
           { nome: 'Degrade e sobrancelha', preco: 45.00 },
@@ -93,7 +88,6 @@ export class AgendamentoListComponent implements OnInit {
     });
   }
 
-  // ── Carregamento ─────────────────────────────────────────────────────────────
   carregarTodos() {
     const cliente = this.authService.getClienteLogado();
     if (!cliente) { this.router.navigate(['/login']); return; }
@@ -103,7 +97,6 @@ export class AgendamentoListComponent implements OnInit {
         const meus = lista.filter(a => a.clienteEntity.id === cliente.id);
         const agora = new Date();
 
-        // Atualiza automaticamente pendentes que já passaram usando firstValueFrom
         const atualizacoes = meus
           .filter(ag => {
             if (ag.status !== 'PENDENTE' || !ag.data || !ag.horario) return false;
@@ -139,7 +132,6 @@ export class AgendamentoListComponent implements OnInit {
     return res.sort((a, b) => (b.data + b.horario).localeCompare(a.data + a.horario));
   }
 
-  // ── Notificações ─────────────────────────────────────────────────────────────
   verificarNotificacoes() {
     const cliente = this.authService.getClienteLogado();
     if (!cliente) return;
@@ -156,11 +148,13 @@ export class AgendamentoListComponent implements OnInit {
     }
   }
 
-  // ── Cancelar agendamento ──────────────────────────────────────────────────────
+  // ── Cancelar: agora usa PATCH status=CANCELADO ao invés de DELETE ─────────────
   cancelarAgendamento(ag: Agendamento) {
     Swal.fire({
       title: 'Cancelar agendamento?',
-      html: `<p style="color:#4a4540">Você está cancelando:<br><strong>${ag.observacoes || ag.profissionalServicoEntity.servicoEntity?.descricao}</strong><br>em ${this.formatarData(ag.data)} às ${ag.horario}</p>`,
+      html: `<p style="color:#4a4540">Você está cancelando:<br>
+             <strong>${ag.observacoes || ag.profissionalServicoEntity.servicoEntity?.descricao}</strong><br>
+             em ${this.formatarData(ag.data)} às ${ag.horario}</p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sim, cancelar',
@@ -169,15 +163,25 @@ export class AgendamentoListComponent implements OnInit {
       cancelButtonColor: '#BC9E5F'
     }).then(result => {
       if (!result.isConfirmed) return;
+
+      // PATCH status → CANCELADO (não deleta do banco)
       this.agendamentoService.patch(ag.id!, { status: 'CANCELADO' }).subscribe({
         next: () => {
-          // Remove dos pendentes e adiciona no histórico como CANCELADO
+          // Move da lista de pendentes para o histórico com status CANCELADO
           this.agendamentos = this.agendamentos.filter(a => a.id !== ag.id);
           ag.status = 'CANCELADO';
           this.historico = [ag, ...this.historico];
-          Swal.fire({ title: 'Cancelado', text: 'Seu agendamento foi cancelado.', icon: 'success', confirmButtonColor: '#BC9E5F' });
+          Swal.fire({
+            title: 'Cancelado',
+            text: 'Seu agendamento foi cancelado.',
+            icon: 'success',
+            confirmButtonColor: '#BC9E5F'
+          });
         },
-        error: () => Swal.fire({ title: 'Erro', text: 'Não foi possível cancelar.', icon: 'error', confirmButtonColor: '#BC9E5F' })
+        error: (err) => {
+          const msg = err?.error || 'Não foi possível cancelar o agendamento.';
+          Swal.fire({ title: 'Erro', text: msg, icon: 'error', confirmButtonColor: '#BC9E5F' });
+        }
       });
     });
   }
@@ -185,7 +189,6 @@ export class AgendamentoListComponent implements OnInit {
   // ── Editar ────────────────────────────────────────────────────────────────────
   editar(ag: Agendamento) {
     if (!ag.id) return;
-    // Faz cópia profunda para não alterar a lista antes de salvar
     this.agendamentoEditando = JSON.parse(JSON.stringify(ag));
     this.buscarHorariosLivres(ag.data, ag.id);
     this.mostrarFormEdicao = true;
@@ -216,25 +219,19 @@ export class AgendamentoListComponent implements OnInit {
 
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
-
-    // Busca o profissionalServico correspondente ao serviço selecionado
     const psEncontrado = this.profissionalServicos.find(
       (p: any) => p.servicoEntity?.descricao === novoServico
     );
-
     if (psEncontrado) {
-      // Atualiza o profissionalServicoEntity completo incluindo preco e servicoEntity
       this.agendamentoEditando.profissionalServicoEntity = {
         id: psEncontrado.id,
         preco: psEncontrado.preco,
         servicoEntity: psEncontrado.servicoEntity,
         profissionalEntity: psEncontrado.profissionalEntity
       };
-      // Atualiza o preço e observações do agendamento
       this.agendamentoEditando.preco = psEncontrado.preco;
       this.agendamentoEditando.observacoes = novoServico;
     } else {
-      // Fallback: usa os preços da lista local
       const servicoLocal = this.servicosDisponiveis.find(s => s.nome === novoServico);
       if (servicoLocal && this.agendamentoEditando) {
         this.agendamentoEditando.profissionalServicoEntity = {
@@ -250,7 +247,6 @@ export class AgendamentoListComponent implements OnInit {
 
   salvarEdicao() {
     if (!this.agendamentoEditando?.id) return;
-
     const d = new Date(this.agendamentoEditando.data + 'T00:00:00');
     if (d.getDay() === 0) {
       Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' });
@@ -265,15 +261,9 @@ export class AgendamentoListComponent implements OnInit {
       return;
     }
 
-    const precoFinal = this.agendamentoEditando.preco
-      || this.agendamentoEditando.profissionalServicoEntity.preco
-      || 0;
+    const precoFinal = this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0;
+    const observacoesFinal = this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '';
 
-    const observacoesFinal = this.agendamentoEditando.observacoes
-      || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao
-      || '';
-
-    // Payload limpo para o backend
     const payload = {
       data: this.agendamentoEditando.data,
       local: this.agendamentoEditando.local || 'Barbearia PH',
@@ -286,12 +276,10 @@ export class AgendamentoListComponent implements OnInit {
     };
 
     this.agendamentoService.atualizar(this.agendamentoEditando.id, payload).subscribe({
-      next: (agendamentoAtualizado) => {
-        // Atualiza a lista local imediatamente com os dados retornados
+      next: () => {
         const idx = this.agendamentos.findIndex(a => a.id === this.agendamentoEditando!.id);
         if (idx !== -1) {
-          // Preserva dados completos de cliente e profissional que o backend retorna
-          const agAtualizado: Agendamento = {
+          this.agendamentos[idx] = {
             ...this.agendamentos[idx],
             data: payload.data,
             horario: payload.horario,
@@ -302,17 +290,9 @@ export class AgendamentoListComponent implements OnInit {
             profissionalServicoEntity: this.agendamentoEditando!.profissionalServicoEntity,
             clienteEntity: this.agendamentos[idx].clienteEntity
           };
-          this.agendamentos[idx] = agAtualizado;
         }
-
-        Swal.fire({
-          title: 'Atualizado!',
-          text: 'Agendamento alterado com sucesso.',
-          icon: 'success',
-          confirmButtonColor: '#BC9E5F'
-        });
+        Swal.fire({ title: 'Atualizado!', text: 'Agendamento alterado com sucesso.', icon: 'success', confirmButtonColor: '#BC9E5F' });
         this.cancelarEdicao();
-        // Recarrega para garantir consistência com o banco
         this.carregarTodos();
       },
       error: (err) => {
@@ -324,7 +304,6 @@ export class AgendamentoListComponent implements OnInit {
 
   cancelarEdicao() { this.agendamentoEditando = null; this.mostrarFormEdicao = false; }
 
-  // ── Navegação ─────────────────────────────────────────────────────────────────
   toggleMenu() { this.menuAberto = !this.menuAberto; }
 
   mostrarSecao(secao: string) {
@@ -343,7 +322,6 @@ export class AgendamentoListComponent implements OnInit {
     this.carregarTodos();
   }
 
-  // ── Meus Dados ────────────────────────────────────────────────────────────────
   getClienteLogado() { return this.authService.getClienteLogado(); }
 
   iniciarEdicao() {
@@ -368,7 +346,6 @@ export class AgendamentoListComponent implements OnInit {
 
   sair() { this.authService.logout(); this.router.navigate(['/login']); }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
   formatarData(data: string): string {
     if (!data) return '-';
     const [ano, mes, dia] = data.split('-');
@@ -398,12 +375,5 @@ export class AgendamentoListComponent implements OnInit {
       event.target.value = '';
       if (this.agendamentoEditando) this.agendamentoEditando.data = '';
     }
-  }
-
-  getPrecoServico(nomeServico: string): number {
-    const ps = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === nomeServico);
-    if (ps) return ps.preco || 0;
-    const local = this.servicosDisponiveis.find(s => s.nome === nomeServico);
-    return local?.preco || 0;
   }
 }

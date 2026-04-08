@@ -419,27 +419,33 @@ export class BarbeiroComponent implements OnInit {
   excluir(ag: Agendamento) {
     if (!ag.id) return;
     Swal.fire({
-      title: 'Confirmar exclusão', text: `Excluir agendamento de ${ag.clienteEntity.nome||'cliente'}?`,
+      title: 'Cancelar agendamento?',
+      html: `<p style="color:#4a4540">Você está cancelando o agendamento de <strong>${ag.clienteEntity.nome||'cliente'}</strong>:<br>
+             ${ag.observacoes || ag.profissionalServicoEntity.servicoEntity?.descricao || 'Serviço'}<br>
+             em ${this.formatarData(ag.data)} às ${ag.horario}</p>`,
       icon: 'warning', showCancelButton: true,
-      confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sim, cancelar', cancelButtonText: 'Voltar',
       confirmButtonColor: '#9a2020', cancelButtonColor: '#BC9E5F'
     }).then(r => {
       if (!r.isConfirmed) return;
       const { id, clienteEntity, profissionalServicoEntity, data, horario } = ag;
-      this.agendamentoService.deletar(id!).subscribe({
+
+      // PATCH status → CANCELADO (não deleta do banco)
+      this.agendamentoService.patch(id!, { status: 'CANCELADO' }).subscribe({
         next: () => {
-          this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'CANCELADO');
+          this.notificacaoService.adicionarNotificacao(
+            clienteEntity.id,
+            `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`,
+            'CANCELADO'
+          );
+          // Move da lista de pendentes para o histórico com status CANCELADO
           this.agendamentos = this.agendamentos.filter(a => a.id !== id);
-          Swal.fire({ title: 'Excluído!', text: `Agendamento removido.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
+          ag.status = 'CANCELADO';
+          this.historico = [ag, ...this.historico];
+          Swal.fire({ title: 'Cancelado!', text: 'Agendamento cancelado com sucesso.', icon: 'success', confirmButtonColor: '#BC9E5F' });
         },
-        error: (err) => {
-          if (err.status === 0 || err.status === 200) {
-            this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'CANCELADO');
-            this.agendamentos = this.agendamentos.filter(a => a.id !== id);
-            Swal.fire({ title: 'Excluído!', text: `Agendamento removido.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
-          } else {
-            Swal.fire({ title: 'Erro', text: 'Erro ao excluir', icon: 'error', confirmButtonColor: '#BC9E5F' });
-          }
+        error: () => {
+          Swal.fire({ title: 'Erro', text: 'Erro ao cancelar agendamento.', icon: 'error', confirmButtonColor: '#BC9E5F' });
         }
       });
     });
