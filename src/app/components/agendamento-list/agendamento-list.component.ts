@@ -11,6 +11,7 @@ import { ProfissionalservicoService } from '../../services/profissionalservico/p
 import { Agendamento } from '../../models/agendamento/agendamento';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -20,8 +21,8 @@ import Swal from 'sweetalert2';
   styleUrl: './agendamento-list.component.scss'
 })
 export class AgendamentoListComponent implements OnInit {
-  agendamentos: Agendamento[] = [];          // apenas PENDENTES
-  historico: Agendamento[] = [];             // CONCLUIDO + CANCELADO
+  agendamentos: Agendamento[] = [];
+  historico: Agendamento[] = [];
   agendamentoEditando: Agendamento | null = null;
   mostrarFormEdicao = false;
   editandoDados = false;
@@ -34,16 +35,7 @@ export class AgendamentoListComponent implements OnInit {
   filtroHistorico = '';
   filtroStatusHistorico = '';
 
-  servicosDisponiveis = [
-    { nome: 'Cabelo e barba', preco: 60.00 },
-    { nome: 'Degrade e sobrancelha', preco: 45.00 },
-    { nome: 'Social e sobrancelha', preco: 40.00 },
-    { nome: 'Cabelo Social', preco: 35.00 },
-    { nome: 'Cabelo', preco: 40.00 },
-    { nome: 'Acabamento no Cabelo', preco: 20.00 },
-    { nome: 'Barba', preco: 35.00 },
-    { nome: 'Sobrancelha', preco: 10.00 }
-  ];
+  servicosDisponiveis: { nome: string; preco: number }[] = [];
 
   horariosDisponiveis = [
     '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
@@ -51,6 +43,8 @@ export class AgendamentoListComponent implements OnInit {
     '18:00','18:30','19:00','19:30','20:00','20:30'
   ];
   horariosLivres: string[] = [];
+
+  profissionalServicos: any[] = [];
 
   constructor(
     private agendamentoService: AgendamentoService,
@@ -62,8 +56,41 @@ export class AgendamentoListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.carregarServicosDisponiveis();
     this.carregarTodos();
     this.verificarNotificacoes();
+  }
+
+  // ── Carrega serviços reais do backend ─────────────────────────────────────────
+  carregarServicosDisponiveis() {
+    this.profissionalServicoService.listar().subscribe({
+      next: (ps: any[]) => {
+        this.profissionalServicos = ps;
+        // Monta lista única de serviços com preço
+        const vistos = new Set<string>();
+        this.servicosDisponiveis = ps
+          .filter((p: any) => {
+            const desc = p.servicoEntity?.descricao;
+            if (!desc || vistos.has(desc)) return false;
+            vistos.add(desc);
+            return true;
+          })
+          .map((p: any) => ({ nome: p.servicoEntity.descricao, preco: p.preco || 0 }));
+      },
+      error: () => {
+        // Fallback com valores padrão
+        this.servicosDisponiveis = [
+          { nome: 'Cabelo e barba', preco: 60.00 },
+          { nome: 'Degrade e sobrancelha', preco: 45.00 },
+          { nome: 'Social e sobrancelha', preco: 40.00 },
+          { nome: 'Cabelo Social', preco: 35.00 },
+          { nome: 'Cabelo', preco: 40.00 },
+          { nome: 'Acabamento no Cabelo', preco: 20.00 },
+          { nome: 'Barba', preco: 35.00 },
+          { nome: 'Sobrancelha', preco: 10.00 }
+        ];
+      }
+    });
   }
 
   // ── Carregamento ─────────────────────────────────────────────────────────────
@@ -72,32 +99,28 @@ export class AgendamentoListComponent implements OnInit {
     if (!cliente) { this.router.navigate(['/login']); return; }
 
     this.agendamentoService.listar().subscribe({
-      next: (lista) => {
+      next: async (lista) => {
         const meus = lista.filter(a => a.clienteEntity.id === cliente.id);
-
-        // Verifica automaticamente se algum agendamento passou da hora e atualiza status
         const agora = new Date();
-        const atualizacoes: Promise<void>[] = [];
 
-        meus.forEach(ag => {
-          if (ag.status === 'PENDENTE' && ag.data && ag.horario) {
+        // Atualiza automaticamente pendentes que já passaram usando firstValueFrom
+        const atualizacoes = meus
+          .filter(ag => {
+            if (ag.status !== 'PENDENTE' || !ag.data || !ag.horario) return false;
             const [ano, mes, dia] = ag.data.split('-').map(Number);
             const [hora, min] = ag.horario.split(':').map(Number);
-            const dtAg = new Date(ano, mes - 1, dia, hora, min);
-            if (dtAg < agora) {
-              // Passou da hora — marca como concluído via PATCH
-              const p = this.agendamentoService.patch(ag.id!, { status: 'CONCLUIDO' }).toPromise()
-                .then(() => { ag.status = 'CONCLUIDO'; })
-                .catch(() => {});
-              atualizacoes.push(p);
-            }
-          }
-        });
+            return new Date(ano, mes - 1, dia, hora, min) < agora;
+          })
+          .map(ag =>
+            firstValueFrom(this.agendamentoService.patch(ag.id!, { status: 'CONCLUIDO' }))
+              .then(() => { ag.status = 'CONCLUIDO'; })
+              .catch(() => {})
+          );
 
-        Promise.all(atualizacoes).then(() => {
-          this.agendamentos = meus.filter(a => a.status === 'PENDENTE');
-          this.historico    = meus.filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO');
-        });
+        await Promise.all(atualizacoes);
+
+        this.agendamentos = meus.filter(a => a.status === 'PENDENTE');
+        this.historico    = meus.filter(a => a.status === 'CONCLUIDO' || a.status === 'CANCELADO');
       },
       error: () => Swal.fire({ title: 'Erro', text: 'Erro ao carregar agendamentos', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
@@ -122,7 +145,7 @@ export class AgendamentoListComponent implements OnInit {
     if (!cliente) return;
     const notificacoes = this.notificacaoService.obterNotificacoesCliente(cliente.id);
     if (notificacoes.length > 0) {
-      const mensagens = notificacoes.map(n => `• ${n.mensagem}`).join('\n');
+      const mensagens = notificacoes.map((n: any) => `• ${n.mensagem}`).join('\n');
       Swal.fire({
         title: 'Você tem notificações',
         text: mensagens,
@@ -133,7 +156,7 @@ export class AgendamentoListComponent implements OnInit {
     }
   }
 
-  // ── Cancelar agendamento (cliente) ────────────────────────────────────────────
+  // ── Cancelar agendamento ──────────────────────────────────────────────────────
   cancelarAgendamento(ag: Agendamento) {
     Swal.fire({
       title: 'Cancelar agendamento?',
@@ -148,6 +171,7 @@ export class AgendamentoListComponent implements OnInit {
       if (!result.isConfirmed) return;
       this.agendamentoService.patch(ag.id!, { status: 'CANCELADO' }).subscribe({
         next: () => {
+          // Remove dos pendentes e adiciona no histórico como CANCELADO
           this.agendamentos = this.agendamentos.filter(a => a.id !== ag.id);
           ag.status = 'CANCELADO';
           this.historico = [ag, ...this.historico];
@@ -161,7 +185,8 @@ export class AgendamentoListComponent implements OnInit {
   // ── Editar ────────────────────────────────────────────────────────────────────
   editar(ag: Agendamento) {
     if (!ag.id) return;
-    this.agendamentoEditando = { ...ag };
+    // Faz cópia profunda para não alterar a lista antes de salvar
+    this.agendamentoEditando = JSON.parse(JSON.stringify(ag));
     this.buscarHorariosLivres(ag.data, ag.id);
     this.mostrarFormEdicao = true;
   }
@@ -171,12 +196,17 @@ export class AgendamentoListComponent implements OnInit {
     if (d.getDay() === 0) { this.horariosLivres = []; return; }
     this.agendamentoService.listar().subscribe({
       next: (ags) => {
-        const ocupados = ags.filter(a => a.data === data && a.id !== agendamentoId && a.status === 'PENDENTE').map(a => a.horario);
+        const ocupados = ags
+          .filter(a => a.data === data && a.id !== agendamentoId && a.status === 'PENDENTE')
+          .map(a => a.horario);
         let livres = this.horariosDisponiveis.filter(h => !ocupados.includes(h));
         const hoje = new Date();
         if (d.toDateString() === hoje.toDateString()) {
           const agora = hoje.getHours() * 60 + hoje.getMinutes();
-          livres = livres.filter(h => { const [hr, mn] = h.split(':').map(Number); return hr * 60 + mn > agora; });
+          livres = livres.filter(h => {
+            const [hr, mn] = h.split(':').map(Number);
+            return hr * 60 + mn > agora;
+          });
         }
         this.horariosLivres = livres;
       },
@@ -186,36 +216,109 @@ export class AgendamentoListComponent implements OnInit {
 
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
-    this.profissionalServicoService.listar().subscribe({
-      next: (ps) => {
-        const found = ps.find((p: any) => p.servicoEntity?.descricao === novoServico);
-        if (found && this.agendamentoEditando) this.agendamentoEditando.profissionalServicoEntity = found;
+
+    // Busca o profissionalServico correspondente ao serviço selecionado
+    const psEncontrado = this.profissionalServicos.find(
+      (p: any) => p.servicoEntity?.descricao === novoServico
+    );
+
+    if (psEncontrado) {
+      // Atualiza o profissionalServicoEntity completo incluindo preco e servicoEntity
+      this.agendamentoEditando.profissionalServicoEntity = {
+        id: psEncontrado.id,
+        preco: psEncontrado.preco,
+        servicoEntity: psEncontrado.servicoEntity,
+        profissionalEntity: psEncontrado.profissionalEntity
+      };
+      // Atualiza o preço e observações do agendamento
+      this.agendamentoEditando.preco = psEncontrado.preco;
+      this.agendamentoEditando.observacoes = novoServico;
+    } else {
+      // Fallback: usa os preços da lista local
+      const servicoLocal = this.servicosDisponiveis.find(s => s.nome === novoServico);
+      if (servicoLocal && this.agendamentoEditando) {
+        this.agendamentoEditando.profissionalServicoEntity = {
+          ...this.agendamentoEditando.profissionalServicoEntity,
+          preco: servicoLocal.preco,
+          servicoEntity: { descricao: novoServico }
+        };
+        this.agendamentoEditando.preco = servicoLocal.preco;
+        this.agendamentoEditando.observacoes = novoServico;
       }
-    });
+    }
   }
 
   salvarEdicao() {
     if (!this.agendamentoEditando?.id) return;
+
     const d = new Date(this.agendamentoEditando.data + 'T00:00:00');
-    if (d.getDay() === 0) { Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' }); return; }
-    if (d < new Date() && d.toDateString() !== new Date().toDateString()) {
-      Swal.fire({ title: 'Erro', text: 'Não é possível agendar em data passada', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
+    if (d.getDay() === 0) {
+      Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' });
+      return;
     }
-    const limpo = {
-      id: this.agendamentoEditando.id, data: this.agendamentoEditando.data,
-      local: this.agendamentoEditando.local, horario: this.agendamentoEditando.horario,
-      status: this.agendamentoEditando.status,
-      observacoes: this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '',
-      preco: this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0,
+    if (d < new Date() && d.toDateString() !== new Date().toDateString()) {
+      Swal.fire({ title: 'Erro', text: 'Não é possível agendar em data passada', icon: 'error', confirmButtonColor: '#BC9E5F' });
+      return;
+    }
+    if (!this.agendamentoEditando.horario) {
+      Swal.fire({ title: 'Atenção', text: 'Selecione um horário disponível.', icon: 'warning', confirmButtonColor: '#BC9E5F' });
+      return;
+    }
+
+    const precoFinal = this.agendamentoEditando.preco
+      || this.agendamentoEditando.profissionalServicoEntity.preco
+      || 0;
+
+    const observacoesFinal = this.agendamentoEditando.observacoes
+      || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao
+      || '';
+
+    // Payload limpo para o backend
+    const payload = {
+      data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local || 'Barbearia PH',
+      horario: this.agendamentoEditando.horario,
+      status: this.agendamentoEditando.status || 'PENDENTE',
+      observacoes: observacoesFinal,
+      preco: precoFinal,
       clienteEntity: { id: this.agendamentoEditando.clienteEntity.id },
       profissionalServicoEntity: { id: this.agendamentoEditando.profissionalServicoEntity.id }
     };
-    this.agendamentoService.atualizar(this.agendamentoEditando.id, limpo).subscribe({
-      next: () => {
-        Swal.fire({ title: 'Atualizado!', text: 'Agendamento alterado com sucesso.', icon: 'success', confirmButtonColor: '#BC9E5F' });
-        this.cancelarEdicao(); this.carregarTodos();
+
+    this.agendamentoService.atualizar(this.agendamentoEditando.id, payload).subscribe({
+      next: (agendamentoAtualizado) => {
+        // Atualiza a lista local imediatamente com os dados retornados
+        const idx = this.agendamentos.findIndex(a => a.id === this.agendamentoEditando!.id);
+        if (idx !== -1) {
+          // Preserva dados completos de cliente e profissional que o backend retorna
+          const agAtualizado: Agendamento = {
+            ...this.agendamentos[idx],
+            data: payload.data,
+            horario: payload.horario,
+            local: payload.local,
+            status: payload.status as any,
+            observacoes: payload.observacoes,
+            preco: payload.preco,
+            profissionalServicoEntity: this.agendamentoEditando!.profissionalServicoEntity,
+            clienteEntity: this.agendamentos[idx].clienteEntity
+          };
+          this.agendamentos[idx] = agAtualizado;
+        }
+
+        Swal.fire({
+          title: 'Atualizado!',
+          text: 'Agendamento alterado com sucesso.',
+          icon: 'success',
+          confirmButtonColor: '#BC9E5F'
+        });
+        this.cancelarEdicao();
+        // Recarrega para garantir consistência com o banco
+        this.carregarTodos();
       },
-      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao atualizar agendamento', icon: 'error', confirmButtonColor: '#BC9E5F' })
+      error: (err) => {
+        const msg = err?.error || err?.message || 'Erro ao atualizar agendamento';
+        Swal.fire({ title: 'Erro', text: msg, icon: 'error', confirmButtonColor: '#BC9E5F' });
+      }
     });
   }
 
@@ -237,7 +340,7 @@ export class AgendamentoListComponent implements OnInit {
 
   onModalAgendamentoClosed() {
     this.showModalAgendamento = false;
-    this.carregarTodos(); // recarrega para refletir novo agendamento
+    this.carregarTodos();
   }
 
   // ── Meus Dados ────────────────────────────────────────────────────────────────
@@ -295,5 +398,12 @@ export class AgendamentoListComponent implements OnInit {
       event.target.value = '';
       if (this.agendamentoEditando) this.agendamentoEditando.data = '';
     }
+  }
+
+  getPrecoServico(nomeServico: string): number {
+    const ps = this.profissionalServicos.find((p: any) => p.servicoEntity?.descricao === nomeServico);
+    if (ps) return ps.preco || 0;
+    const local = this.servicosDisponiveis.find(s => s.nome === nomeServico);
+    return local?.preco || 0;
   }
 }

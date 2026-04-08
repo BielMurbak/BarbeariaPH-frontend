@@ -196,7 +196,7 @@
 
 </div>
 
-<!-- Modal edição -->
+<!-- ── MODAL EDIÇÃO ───────────────────────────────────────────────────────── -->
 @if (mostrarFormEdicao && agendamentoEditando) {
 <div class="modal-overlay" (click)="cancelarEdicao()">
   <div class="modal-edicao" (click)="$event.stopPropagation()">
@@ -204,35 +204,48 @@
       <i class="fas fa-pen"></i>
       <h3>Editar Agendamento</h3>
     </div>
+
     <div class="form-group">
       <label>Serviço</label>
-      <select class="form-control" [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || ''"
+      <select class="form-control"
+        [value]="agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || ''"
         (change)="atualizarServico($any($event.target).value)">
         @for (servico of servicosDisponiveis; track servico.nome) {
-          <option [value]="servico.nome" [selected]="servico.nome === agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao">
+          <option [value]="servico.nome"
+            [selected]="servico.nome === (agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || agendamentoEditando.observacoes)">
             {{ servico.nome }} — R$ {{ servico.preco.toFixed(2) }}
           </option>
         }
       </select>
     </div>
+
     <div class="form-group">
       <label>Data</label>
-      <input type="date" class="form-control" [(ngModel)]="agendamentoEditando.data" [min]="getDataMinima()"
+      <input type="date" class="form-control"
+        [(ngModel)]="agendamentoEditando.data"
+        [min]="getDataMinima()"
         (change)="validarData($event); buscarHorariosLivres(agendamentoEditando.data, agendamentoEditando.id)" />
     </div>
+
     <div class="form-group">
       <label>Horário</label>
       <select class="form-control" [(ngModel)]="agendamentoEditando.horario">
+        @if (horariosLivres.length === 0) {
+          <option value="">Nenhum horário disponível</option>
+        }
         @for (horario of horariosLivres; track horario) {
           <option [value]="horario">{{ horario }}</option>
         }
       </select>
     </div>
+
     <div class="form-group">
       <label>Valor</label>
       <input type="text" class="form-control"
-        [value]="'R$ ' + (agendamentoEditando.profissionalServicoEntity.preco?.toFixed(2) || '0,00')" readonly />
+        [value]="'R$ ' + (agendamentoEditando.preco || agendamentoEditando.profissionalServicoEntity.preco || 0).toFixed(2)"
+        readonly />
     </div>
+
     <div class="form-actions">
       <button class="btn-modal-salvar" (click)="salvarEdicao()"><i class="fas fa-check"></i> Salvar</button>
       <button class="btn-modal-cancelar" (click)="cancelarEdicao()"><i class="fas fa-times"></i> Cancelar</button>

@@ -12,7 +12,7 @@ export class AgendamentoService {
 
   constructor(private http: HttpClient) { }
 
-  salvar(agendamento: Agendamento): Observable<Agendamento> {
+  salvar(agendamento: any): Observable<Agendamento> {
     return this.http.post<Agendamento>(this.api, agendamento).pipe(
       catchError(error => throwError(() => error))
     );
@@ -30,8 +30,14 @@ export class AgendamentoService {
     );
   }
 
-  atualizar(id: number, agendamento: Agendamento): Observable<Agendamento> {
+  atualizar(id: number, agendamento: any): Observable<Agendamento> {
     return this.http.put<Agendamento>(`${this.api}/${id}`, agendamento).pipe(
+      catchError(error => throwError(() => error))
+    );
+  }
+
+  patch(id: number, updates: any): Observable<any> {
+    return this.http.patch<any>(`${this.api}/${id}`, updates).pipe(
       catchError(error => throwError(() => error))
     );
   }
@@ -42,8 +48,3 @@ export class AgendamentoService {
     );
   }
 }
-  patch(id: number, updates: any): import('rxjs').Observable<any> {
-    return this.http.patch<any>(`${this.api}/${id}`, updates).pipe(
-      catchError(error => throwError(() => error))
-    );
-  }

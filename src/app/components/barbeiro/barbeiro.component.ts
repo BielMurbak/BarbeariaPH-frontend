@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AgendamentoService } from '../../services/agendamento/agendamento.service';
 import { ProfissionalService } from '../../services/profissional/profissional.service';
 import { ClienteService } from '../../services/cliente/cliente.service';
@@ -50,16 +51,8 @@ export class BarbeiroComponent implements OnInit {
   profissionalServicos: any[] = [];
   horariosNovoAgendamento: string[] = [];
 
-  servicosDisponiveis = [
-    { nome: 'Cabelo e barba', preco: 60.00 },
-    { nome: 'Degrade e sobrancelha', preco: 45.00 },
-    { nome: 'Social e sobrancelha', preco: 40.00 },
-    { nome: 'Cabelo Social', preco: 35.00 },
-    { nome: 'Cabelo', preco: 40.00 },
-    { nome: 'Acabamento no Cabelo', preco: 20.00 },
-    { nome: 'Barba', preco: 35.00 },
-    { nome: 'Sobrancelha', preco: 10.00 }
-  ];
+  servicosDisponiveis: { nome: string; preco: number }[] = [];
+
   servicosAdicionaisDisponiveis = [
     { nome: '', label: 'Nenhum' },
     { nome: 'Barba', label: 'Barba — R$ 35,00' },
@@ -87,27 +80,68 @@ export class BarbeiroComponent implements OnInit {
 
   ngOnInit() {
     const s = localStorage.getItem('profissionalLogado');
-    if (s) { this.profissionalLogado = JSON.parse(s); this.carregarAgendamentos(); }
-    else this.router.navigate(['/login']);
+    if (s) {
+      this.profissionalLogado = JSON.parse(s);
+      this.carregarServicosDisponiveis();
+      this.carregarAgendamentos();
+    } else {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  // ── Carrega serviços do backend ───────────────────────────────────────────────
+  carregarServicosDisponiveis() {
+    this.profissionalServicoService.listar().subscribe({
+      next: (ps: any[]) => {
+        this.profissionalServicos = ps;
+        const vistos = new Set<string>();
+        this.servicosDisponiveis = ps
+          .filter((p: any) => {
+            const desc = p.servicoEntity?.descricao;
+            if (!desc || vistos.has(desc)) return false;
+            vistos.add(desc);
+            return true;
+          })
+          .map((p: any) => ({ nome: p.servicoEntity.descricao, preco: p.preco || 0 }));
+      },
+      error: () => {
+        // Fallback
+        this.servicosDisponiveis = [
+          { nome: 'Cabelo e barba', preco: 60.00 },
+          { nome: 'Degrade e sobrancelha', preco: 45.00 },
+          { nome: 'Social e sobrancelha', preco: 40.00 },
+          { nome: 'Cabelo Social', preco: 35.00 },
+          { nome: 'Cabelo', preco: 40.00 },
+          { nome: 'Acabamento no Cabelo', preco: 20.00 },
+          { nome: 'Barba', preco: 35.00 },
+          { nome: 'Sobrancelha', preco: 10.00 }
+        ];
+      }
+    });
   }
 
   carregarAgendamentos() {
     this.agendamentoService.listar().subscribe({
-      next: (ags) => {
+      next: async (ags) => {
         const agora = new Date();
-        // Auto-atualiza pendentes que já passaram
-        const patchPromises = ags.filter(a => {
+
+        // Auto-atualiza pendentes que já passaram usando firstValueFrom
+        const pendentesVencidos = ags.filter(a => {
           if (a.status !== 'PENDENTE' || !a.data || !a.horario) return false;
           const [ano, mes, dia] = a.data.split('-').map(Number);
           const [hr, mn] = a.horario.split(':').map(Number);
           return new Date(ano, mes - 1, dia, hr, mn) < agora;
-        }).map(a => this.agendamentoService.patch(a.id!, { status: 'CONCLUIDO' }).toPromise().catch(() => {}));
-
-        Promise.all(patchPromises).then(() => {
-          this.agendamentoService.listar().subscribe({ next: (lista) => {
-            this.agendamentos = lista.filter(a => a.status === 'PENDENTE');
-          }});
         });
+
+        await Promise.all(
+          pendentesVencidos.map(a =>
+            firstValueFrom(this.agendamentoService.patch(a.id!, { status: 'CONCLUIDO' }))
+              .then(() => { a.status = 'CONCLUIDO'; })
+              .catch(() => {})
+          )
+        );
+
+        this.agendamentos = ags.filter(a => a.status === 'PENDENTE');
       },
       error: () => Swal.fire({ title: 'Erro', text: 'Erro ao carregar agendamentos', icon: 'error', confirmButtonColor: '#BC9E5F' })
     });
@@ -177,7 +211,9 @@ export class BarbeiroComponent implements OnInit {
   abrirNovoAgendamento() {
     this.novoAgendamento = { nome: '', sobrenome: '', telefone: '', servico: '', servicoAdicional: '', data: '', horario: '' };
     this.horariosNovoAgendamento = [];
-    this.profissionalServicoService.listar().subscribe({ next: (ps: any[]) => { this.profissionalServicos = ps; } });
+    if (this.profissionalServicos.length === 0) {
+      this.profissionalServicoService.listar().subscribe({ next: (ps: any[]) => { this.profissionalServicos = ps; } });
+    }
     this.mostrarFormNovoAgendamento = true;
   }
 
@@ -216,8 +252,6 @@ export class BarbeiroComponent implements OnInit {
     if (!psEncontrado) {
       Swal.fire({ title: 'Serviço não encontrado', text: 'Serviço não disponível no sistema.', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
     }
-
-    // Tenta achar cliente pelo telefone, se não existir cria um novo
     this.clienteService.listar().subscribe({ next: (clientes) => {
       const telNum = telefone.replace(/\D/g, '');
       const clienteExistente = clientes.find((c: any) => c.celular.replace(/\D/g, '') === telNum);
@@ -260,7 +294,7 @@ export class BarbeiroComponent implements OnInit {
   // ── Edição ─────────────────────────────────────────────────────────────────────
   editar(ag: Agendamento) {
     if (!ag.id) return;
-    this.agendamentoEditando = { ...ag };
+    this.agendamentoEditando = JSON.parse(JSON.stringify(ag));
     this.buscarHorariosLivres(ag.data, ag.id);
     this.mostrarFormEdicao = true;
   }
@@ -279,36 +313,104 @@ export class BarbeiroComponent implements OnInit {
 
   atualizarServico(novoServico: string) {
     if (!this.agendamentoEditando) return;
-    this.profissionalServicoService.listar().subscribe({
-      next: (ps: any[]) => {
-        const f = ps.find(p => p.servicoEntity?.descricao === novoServico);
-        if (f && this.agendamentoEditando) this.agendamentoEditando.profissionalServicoEntity = f;
+
+    // Busca profissionalServico pelo nome do serviço
+    const psEncontrado = this.profissionalServicos.find(
+      (p: any) => p.servicoEntity?.descricao === novoServico
+    );
+
+    if (psEncontrado) {
+      this.agendamentoEditando.profissionalServicoEntity = {
+        id: psEncontrado.id,
+        preco: psEncontrado.preco,
+        servicoEntity: psEncontrado.servicoEntity,
+        profissionalEntity: psEncontrado.profissionalEntity
+      };
+      this.agendamentoEditando.preco = psEncontrado.preco;
+      this.agendamentoEditando.observacoes = novoServico;
+    } else {
+      // Fallback com lista local
+      const servicoLocal = this.servicosDisponiveis.find(s => s.nome === novoServico);
+      if (servicoLocal && this.agendamentoEditando) {
+        this.agendamentoEditando.profissionalServicoEntity = {
+          ...this.agendamentoEditando.profissionalServicoEntity,
+          preco: servicoLocal.preco,
+          servicoEntity: { descricao: novoServico }
+        };
+        this.agendamentoEditando.preco = servicoLocal.preco;
+        this.agendamentoEditando.observacoes = novoServico;
       }
-    });
+    }
   }
 
   salvarEdicao() {
     if (!this.agendamentoEditando?.id) return;
-    if (new Date(this.agendamentoEditando.data + 'T00:00:00').getDay() === 0) {
+
+    const d = new Date(this.agendamentoEditando.data + 'T00:00:00');
+    if (d.getDay() === 0) {
       Swal.fire({ title: 'Erro', text: 'Não funcionamos aos domingos', icon: 'error', confirmButtonColor: '#BC9E5F' }); return;
     }
-    const limpo = {
-      id: this.agendamentoEditando.id, data: this.agendamentoEditando.data,
-      local: this.agendamentoEditando.local, horario: this.agendamentoEditando.horario,
-      status: this.agendamentoEditando.status,
-      observacoes: this.agendamentoEditando.observacoes || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao || '',
-      preco: this.agendamentoEditando.preco || this.agendamentoEditando.profissionalServicoEntity.preco || 0,
+    if (!this.agendamentoEditando.horario) {
+      Swal.fire({ title: 'Atenção', text: 'Selecione um horário disponível.', icon: 'warning', confirmButtonColor: '#BC9E5F' }); return;
+    }
+
+    const precoFinal = this.agendamentoEditando.preco
+      || this.agendamentoEditando.profissionalServicoEntity.preco
+      || 0;
+
+    const observacoesFinal = this.agendamentoEditando.observacoes
+      || this.agendamentoEditando.profissionalServicoEntity.servicoEntity?.descricao
+      || '';
+
+    const payload = {
+      data: this.agendamentoEditando.data,
+      local: this.agendamentoEditando.local || 'Barbearia PH',
+      horario: this.agendamentoEditando.horario,
+      status: this.agendamentoEditando.status || 'PENDENTE',
+      observacoes: observacoesFinal,
+      preco: precoFinal,
       clienteEntity: { id: this.agendamentoEditando.clienteEntity.id },
       profissionalServicoEntity: { id: this.agendamentoEditando.profissionalServicoEntity.id }
     };
-    this.agendamentoService.atualizar(this.agendamentoEditando.id, limpo).subscribe({
+
+    this.agendamentoService.atualizar(this.agendamentoEditando.id, payload).subscribe({
       next: () => {
-        const { clienteEntity, profissionalServicoEntity, data, horario } = this.agendamentoEditando!;
-        this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi alterado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'EDITADO');
-        Swal.fire({ title: 'Atualizado!', text: `Agendamento de ${clienteEntity.nome||'cliente'} salvo.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
-        this.cancelarEdicao(); this.carregarAgendamentos();
+        const { clienteEntity, data, horario } = this.agendamentoEditando!;
+        this.notificacaoService.adicionarNotificacao(
+          clienteEntity.id,
+          `Seu agendamento foi alterado: ${observacoesFinal} em ${data} às ${horario}`,
+          'EDITADO'
+        );
+
+        // Atualiza a lista local imediatamente
+        const idx = this.agendamentos.findIndex(a => a.id === this.agendamentoEditando!.id);
+        if (idx !== -1) {
+          this.agendamentos[idx] = {
+            ...this.agendamentos[idx],
+            data: payload.data,
+            horario: payload.horario,
+            local: payload.local,
+            status: payload.status as any,
+            observacoes: payload.observacoes,
+            preco: payload.preco,
+            profissionalServicoEntity: this.agendamentoEditando!.profissionalServicoEntity,
+          };
+        }
+
+        Swal.fire({
+          title: 'Atualizado!',
+          text: `Agendamento de ${clienteEntity.nome || 'cliente'} salvo com sucesso.`,
+          icon: 'success',
+          confirmButtonColor: '#BC9E5F'
+        });
+        this.cancelarEdicao();
+        // Recarrega para sincronizar com banco
+        this.carregarAgendamentos();
       },
-      error: () => Swal.fire({ title: 'Erro', text: 'Erro ao atualizar', icon: 'error', confirmButtonColor: '#BC9E5F' })
+      error: (err) => {
+        const msg = err?.error || err?.message || 'Erro ao atualizar agendamento.';
+        Swal.fire({ title: 'Erro', text: msg, icon: 'error', confirmButtonColor: '#BC9E5F' });
+      }
     });
   }
 
@@ -335,7 +437,9 @@ export class BarbeiroComponent implements OnInit {
             this.notificacaoService.adicionarNotificacao(clienteEntity.id, `Seu agendamento foi cancelado: ${profissionalServicoEntity.servicoEntity?.descricao||'Serviço'} em ${data} às ${horario}`, 'CANCELADO');
             this.agendamentos = this.agendamentos.filter(a => a.id !== id);
             Swal.fire({ title: 'Excluído!', text: `Agendamento removido.`, icon: 'success', confirmButtonColor: '#BC9E5F' });
-          } else Swal.fire({ title: 'Erro', text: 'Erro ao excluir', icon: 'error', confirmButtonColor: '#BC9E5F' });
+          } else {
+            Swal.fire({ title: 'Erro', text: 'Erro ao excluir', icon: 'error', confirmButtonColor: '#BC9E5F' });
+          }
         }
       });
     });
@@ -372,9 +476,7 @@ export class BarbeiroComponent implements OnInit {
   getCaixaGraficoData(): { label: string; atendimentos: number; faturamento: number }[] {
     const todos = [...this.agendamentos, ...this.historico].filter(a => a.status === 'CONCLUIDO');
     const hoje = new Date();
-
     if (this.periodoCaixa === 'semana') {
-      // Domingo a sábado da semana atual
       const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
       const inicioSemana = new Date(hoje);
       inicioSemana.setDate(hoje.getDate() - hoje.getDay());
@@ -386,7 +488,6 @@ export class BarbeiroComponent implements OnInit {
         return { label, atendimentos: do_dia.length, faturamento: do_dia.reduce((acc, a) => acc + (a.preco || a.profissionalServicoEntity.preco || 0), 0) };
       });
     } else {
-      // Todos os meses do ano atual
       const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       const ano = hoje.getFullYear();
       return meses.map((label, i) => {
