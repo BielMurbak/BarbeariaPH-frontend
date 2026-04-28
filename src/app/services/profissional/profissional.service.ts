@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Profissional } from '../../models/profissional/profissional';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProfissionalService {
 
-  private api = "http://localhost:8080/api/profissionais"
+  private api = `${environment.apiUrl}/api/profissionais`;
    
   constructor(private http: HttpClient) { }
 

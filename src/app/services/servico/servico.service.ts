@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Servico } from '../../models/servico/servico';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ServicoService {
 
-  private api = "http://localhost:8080/api/servicos"
+  private api = `${environment.apiUrl}/api/servicos`;
   
   constructor(private http: HttpClient) { }
 

@@ -3,13 +3,14 @@ import { Cliente } from '../../models/cliente/cliente';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClienteService {
 
-  private api = "http://localhost:8080/api/clientes";
+  private api = `${environment.apiUrl}/api/clientes`;
 
   constructor(private http: HttpClient) { }
 
@@ -45,7 +46,7 @@ export class ClienteService {
 
   buscarPorTelefoneESenha(telefone: string, senha: string): Observable<any> {
     const loginData = { celular: telefone, senha: senha };
-    return this.http.post<any>('http://localhost:8080/api/auth/login', loginData).pipe(
+    return this.http.post<any>(`${environment.apiUrl}/api/auth/login`, loginData).pipe(
       catchError(error => throwError(() => error))
     );
   }

@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Agendamento } from '../../models/agendamento/agendamento';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AgendamentoService {
-  private api = "http://localhost:8080/api/agendamentos";
+  private api = `${environment.apiUrl}/api/agendamentos`;
 
   constructor(private http: HttpClient) { }
 
