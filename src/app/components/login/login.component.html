@@ -1,60 +1,87 @@
-<nav class="navbar navbar-expand-lg custom-navbar">
-  <div class="container-fluid">
-    <div class="navbar-left">
+<!-- Navbar padronizada -->
+<nav class="custom-navbar">
+  <div class="navbar-inner">
+    <div class="navbar-brand-group">
       <img src="assets/logo.png" alt="Logo" class="navbar-logo" />
-      <a class="navbar-brand" href="#">PH Barbearia Classica</a>
+      <span class="navbar-brand">PH Barbearia Clássica</span>
     </div>
-    <button class="btn-voltar" (click)="voltar()">Voltar</button>
+    <button class="btn-voltar" (click)="voltar()">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </button>
   </div>
 </nav>
 
-<div class="login-container">
-  <div class="login-form">
-    <h2>Login</h2>
-    <form (ngSubmit)="login()">
-      <div class="form-outline mb-4">
-        <input 
-          type="tel" 
+<div class="login-page">
+  <div class="login-card">
+
+    <!-- Cabeçalho do card -->
+    <div class="login-card-header">
+      <img src="assets/logo.png" alt="Logo PH" class="login-logo" />
+      <h2 class="login-titulo">Bem-vindo</h2>
+      <p class="login-subtitulo">Acesse sua conta para gerenciar agendamentos</p>
+    </div>
+
+    <!-- Alerta de erro (inline, não flutua) -->
+    @if (mostrarErro) {
+    <div class="login-alerta">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ mensagemErro }}</span>
+      <button class="alerta-fechar" (click)="fecharAlerta()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    }
+
+    <form (ngSubmit)="login()" class="login-form">
+
+      <div class="field-group">
+        <label class="field-label" for="telefone">
+          <i class="fas fa-phone"></i> Telefone
+        </label>
+        <input
+          type="tel"
           id="telefone"
-          class="form-control"
-          [(ngModel)]="telefone" 
+          class="field-input"
+          [(ngModel)]="telefone"
           name="telefone"
           placeholder="(__) _____-____"
           (input)="formatarTelefone($event)"
-          required>
-        <label class="form-label" for="telefone">Telefone</label>
+          (keypress)="apenasNumeros($event)"
+          autocomplete="tel"
+        />
       </div>
 
-      <div class="form-outline mb-4">
-        <input 
-          type="password" 
-          id="senha" 
-          class="form-control" 
-          [(ngModel)]="senha" 
+      <div class="field-group">
+        <label class="field-label" for="senha">
+          <i class="fas fa-lock"></i> Senha
+        </label>
+        <input
+          type="password"
+          id="senha"
+          class="field-input"
+          [(ngModel)]="senha"
           name="senha"
-          placeholder="Senha"
-          required>
-        <label class="form-label" for="senha">Senha</label>
+          placeholder="Digite sua senha"
+          autocomplete="current-password"
+        />
       </div>
-      
-      <button type="submit" class="btn btn-primary btn-block mb-4">Entrar</button>
-      
-      <!-- Alerta de erro -->
-      @if (mostrarErro) {
-      <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        {{ mensagemErro }}
-        <button type="button" class="btn-close" (click)="fecharAlerta()"></button>
-      </div>
-      }
-      
-      <button type="button" class="btn btn-secondary btn-block" (click)="agendar()">Agendar</button>
+
+      <button type="submit" class="btn-entrar">
+        <i class="fas fa-sign-in-alt"></i> Entrar
+      </button>
+
+      <div class="login-divider"><span>ou</span></div>
+
+      <button type="button" class="btn-agendar-sem-conta" (click)="agendar()">
+        Agendar
+      </button>
+
     </form>
   </div>
 </div>
 
-<app-agendamento 
-  [showModal]="showModal" 
+<app-agendamento
+  [showModal]="showModal"
   (modalClosed)="fecharModal()">
 </app-agendamento>
 

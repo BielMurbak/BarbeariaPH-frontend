@@ -136,5 +136,19 @@ export class LoginComponent {
       valor = valor.replace(/(\d{2})/, '($1) ');
     }
     this.telefone = valor;
+    // limpa o erro ao editar o campo
+    if (this.mostrarErro) this.mostrarErro = false;
+  }
+
+  apenasNumeros(event: KeyboardEvent): boolean {
+    // permite: dígitos, backspace, delete, tab, setas, parênteses, traço, espaço
+    const permitidos = /[0-9\s()\-]/;
+    if (event.ctrlKey || event.metaKey) return true;
+    if (['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return true;
+    if (!permitidos.test(event.key)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
   }
 }

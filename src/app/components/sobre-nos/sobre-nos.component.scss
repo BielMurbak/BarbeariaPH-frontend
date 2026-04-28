@@ -1,240 +1,265 @@
+// ── Variáveis ─────────────────────────────────────────────────────────────────
+$gold:        #BC9E5F;
+$gold-dark:   #b8962e;
+$gold-light:  rgba(188, 158, 95, 0.12);
+$gold-border: rgba(188, 158, 95, 0.35);
+$bg:          rgb(233, 229, 219);
+$text-dark:   #1a1a1b;
+$text-mid:    #4a4540;
+$text-muted:  #7a7060;
+
+// ── Seção ─────────────────────────────────────────────────────────────────────
 .sobre-nos {
-  background-color: rgb(233, 229, 219);
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch;
-  padding: 50px;
-  position: relative;
+  background-color: $bg;
+  display: grid;
+  grid-template-columns: 1fr 1px 1.4fr 1px 1fr;
+  align-items: center;
+  padding: 72px 40px;
+  gap: 0;
+  min-height: 520px;
 }
 
+// ── Divisor vertical ──────────────────────────────────────────────────────────
+.divisor-vertical {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.15) 15%,
+    rgba(0, 0, 0, 0.15) 85%,
+    transparent 100%
+  );
+  align-self: stretch;
+}
+
+// ── Blocos ────────────────────────────────────────────────────────────────────
 .sobre-bloco {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  position: relative;
-  min-height: 100%;
+  padding: 0 36px;
+  height: 100%;
+  justify-content: center;
 }
 
-/* Linhas decorativas entre blocos (desktop) */
-.sobre-bloco:not(:last-child)::after {
-  content: "";
+// ── Título com linhas laterais ────────────────────────────────────────────────
+.bloco-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  width: 100%;
+  justify-content: center;
+
+  h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: $text-dark;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+}
+
+.titulo-linha {
+  flex: 1;
+  max-width: 48px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2));
+
+  &:last-child {
+    background: linear-gradient(270deg, transparent, rgba(0, 0, 0, 0.2));
+  }
+}
+
+// ── Card do barbeiro ──────────────────────────────────────────────────────────
+.barbeiro-card {
+  width: 100%;
+  max-width: 280px;
+}
+
+.barbeiro-foto-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 120%; // retângulo vertical para dar mais altura
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 2px solid $gold-border;
+    z-index: 2;
+    pointer-events: none;
+  }
+}
+
+.foto-barbeiro {
   position: absolute;
   top: 0;
-  bottom: 0;
-  right: 0;
-  width: 2px;
-  background-color: #000;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  transition: transform 0.5s ease;
+
+  .barbeiro-foto-wrap:hover & { transform: scale(1.04); }
 }
 
+.barbeiro-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, transparent 100%);
+  padding: 28px 16px 16px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.barbeiro-nome {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+}
+
+.barbeiro-cargo {
+  color: $gold;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+// ── Bloco central ─────────────────────────────────────────────────────────────
+.bloco-centro {
+  padding: 0 48px;
+}
+
+// ── Decoração central ─────────────────────────────────────────────────────────
 .decoracao-sobre {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;         /* espaço entre linhas e tesoura */
-  margin: 20px 0;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .decoracao-sobre .linha {
-  width: 100px;      
-  height: 2px;        /* altura da linha */
-  background-color: #000;
+  width: 56px;
+  height: 1.5px;
+  background: rgba(0, 0, 0, 0.18);
   border-radius: 1px;
 }
 
 .decoracao-sobre .tesoura {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   background-image: url('/assets/tesoura.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  flex-shrink: 0;     /* não deixa encolher */
+  flex-shrink: 0;
+  opacity: 0.65;
 }
 
-.sobre-bloco h3 {
-  margin-bottom: 40px;
-  font-size: 2.5rem;
-  color: #000000;
-}
-
-.foto-barbeiro-wrapper {
-  display: inline-block; /* faz o container ter a largura da imagem */
-  position: relative;
-  text-align: center;
-  width: auto;
-}
-
-.foto-barbeiro {
-  display: block;
-  width: 100%;
-  max-width: 300px; /* largura da imagem */
-  border-radius: 15px 15px 0 0; /* cantos superiores arredondados */
-}
-
-.nome-barbeiro-container {
-  position: absolute;   /* fixa no fundo da imagem */
-  bottom: 0;            /* encosta na base da imagem */
-  left: 0;
-  right: 0;
-  background-color: rgba(0,0,0,0.7);
-  padding: 10px 0;
-  border-radius: 0 0 8px 8px;
-  width: 100%;          /* agora sempre acompanha a imagem */
-  box-sizing: border-box;
-}
-
-.nome-barbeiro {
-  color: #fff;
-  margin: 0;
-  font-weight: 600;
-  font-size: 1.5rem;
-}
-
-.centro p {
-  font-size: 1.5rem;
-  line-height: 1.2;
-  margin-top: 30px;
-  padding: 0 15%;       /* afasta o texto das bordas laterais */
+// ── Texto central ─────────────────────────────────────────────────────────────
+.sobre-texto {
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: $text-mid;
   text-align: justify;
 }
 
-.instagram-embed {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* quadrados maiores */
-  gap: 15px;
-}
-
-.instagram-embed {
-  width: 80%;       /* ocupa toda a largura do bloco */
-  height: 550px;     /* define a altura do quadrado grande */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.instagram-embed iframe {
+// ── Instagram ─────────────────────────────────────────────────────────────────
+.instagram-card {
   width: 100%;
-  height: 100%;
-  border-radius: 8px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-@media (max-width: 1500px) and (min-width: 1024px) {
-  .centro p {
-    font-size: 1.2rem;   /* levemente menor */
-    line-height: 1.4;    /* dá mais respiro */
-    padding: 0 8%;       /* menos margem lateral → não empurra tanto */
-    margin-top: 20px;    /* sobe um pouco */
-  }
+.instagram-handle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
-@media (max-width: 1400px) {
-  .sobre-nos {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .sobre-bloco {
-    margin-bottom: 40px;
-
-    &::after { display: none; }
-
-    /* permite que o Instagram ocupe mais largura */
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .instagram-embed {
-    width: 80%;
-    height: 75vh;
-  }
+.insta-icon {
+  width: 20px;
+  height: 20px;
 }
 
-@media (max-width: 768px) {
+.insta-link {
+  color: $gold-dark;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  letter-spacing: 0.04em;
 
-  .centro p {
-    font-size: 1.2rem;   /* diminui um pouco a fonte */
-    line-height: 1.3;    /* reduz o espaçamento entre linhas */
-    padding: 0 10%;      /* mantém espaço das bordas */
-    margin-top: 20px;    /* diminui o espaçamento do título */
-  }
-
-  .sobre-nos {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .sobre-bloco:not(:last-child)::after {
-    top: auto;
-    bottom: 0;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    width: auto;
-  }
-
-  .sobre-bloco {
-    margin-bottom: 30px;
-  }
-
-  .instagram-embed {
-    grid-template-columns: repeat(2, 150px);
-    width: 80%;
-    height: 75vh;
-    gap: 10px;
-  }
-
-  .foto-barbeiro { max-width: 250px; }
+  &:hover { text-decoration: underline; }
 }
 
- @media (max-width: 480px) {
+.instagram-embed-wrap {
+  width: 100%;
+  // altura aumentada para evitar corte do conteúdo
+  height: 350px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid $gold-border;
 
-  .centro p {
-    font-size: 1rem;   
-    line-height: 1.3;    
-    padding: 0 1%;      
-    margin-top: 20px;    
-    margin-bottom: 50px;    
-  }
-
-  .foto-barbeiro { max-width: 220px; }
-
-  .instagram-embed {
-    width: 100%;         /* ocupa 100% da tela no mobile */
-    max-width: 100%;
-    height: auto;        /* sem altura fixa */
-    display: block;      /* remove o flex que centralizava */
-  }
-
-  .instagram-embed iframe {
-    width: 100%;         /* ocupa toda a largura */
-    height: auto;        
-    min-height: 500px;   /* dá espaço pro post inteiro aparecer */
-  }
-
-}
-@media (max-width: 410px) {
-  .sobre-bloco.direito {
-    padding: 0 15px;
-  }
-
-  .instagram-embed {
-    width: 95%;
-    max-width: 350px;
-    height: 400px;
-    margin: 0 auto;
-    overflow: hidden;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .instagram-embed iframe {
+  iframe {
     width: 100%;
     height: 100%;
     border: none;
-    min-height: unset;
+    display: block;
   }
+}
+
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media (max-width: 1100px) {
+  .bloco-centro { padding: 0 28px; }
+  .sobre-bloco  { padding: 0 20px; }
+}
+
+@media (max-width: 900px) {
+  .sobre-nos {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    padding: 52px 24px;
+    gap: 40px;
+  }
+
+  .divisor-vertical {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.15), transparent);
+  }
+
+  .sobre-bloco,
+  .bloco-centro { padding: 0 16px; width: 100%; max-width: 480px; margin: 0 auto; }
+
+  .barbeiro-card { max-width: 260px; }
+
+  .instagram-embed-wrap { height: 380px; }
+}
+
+@media (max-width: 480px) {
+  .sobre-nos { padding: 40px 20px; }
+  .bloco-titulo h3 { font-size: 1.15rem; }
+  .sobre-texto { font-size: 0.9rem; padding: 0 8px; }
+  .barbeiro-card { max-width: 220px; }
+  .instagram-embed-wrap { height: 320px; }
+  .sobre-bloco,
+  .bloco-centro { padding: 0 20px; }
 }

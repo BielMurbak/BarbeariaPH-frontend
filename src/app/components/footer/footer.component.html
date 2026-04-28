@@ -1,28 +1,56 @@
 <footer class="footer">
-  <div class="container-footer">
-    <div class="footer-left">
-      <div class="logo-nome">
-        <img src="assets/logo.png" alt="Logo PH Barbearia" class="footer-logo">
-        <h3 class="footer-nome">PH Barbearia Clássica</h3>
+  <div class="footer-inner">
+
+    <!-- Esquerda: Logo + nome + botão + copyright -->
+    <div class="footer-col footer-brand">
+      <div class="footer-logo-nome">
+        <img src="assets/logo.png" alt="Logo PH Barbearia" class="footer-logo" />
+        <div>
+          <p class="footer-nome">PH Barbearia</p>
+          <p class="footer-subtitulo">Clássica</p>
+        </div>
       </div>
-      <button class="btn-footer" (click)="agendar()">Agendar Horário</button>
+
+      <button class="btn-footer" (click)="agendar()">
+        <span class="btn-footer-icon">✦</span> Agendar Horário
+      </button>
+
       <p class="footer-copyright">
         &copy; 2025 PH Barbearia Clássica. Todos os direitos reservados.
       </p>
     </div>
 
-    <div class="footer-right">
-      <h3 class="footer-titulo">Horário de Funcionamento</h3>
+    <!-- Linha divisória -->
+    <div class="footer-divisor"></div>
+
+    <!-- Direita: Horários -->
+    <div class="footer-col footer-horarios">
+      <h3 class="footer-titulo">
+        <span class="footer-titulo-linha"></span>
+        Funcionamento
+        <span class="footer-titulo-linha"></span>
+      </h3>
+
       <ul class="horarios">
-        <li>Domingo: Fechado</li>
-        <li>Segunda-Feira: 08:00 - 20:30</li>
-        <li>Terça-Feira: 08:00 - 20:30</li>
-        <li>Quarta-Feira: 08:00 - 20:30</li>
-        <li>Quinta-Feira: 08:00 - 20:30</li>
-        <li>Sexta-Feira: 08:00 - 20:30</li>
-        <li>Sábado: 08:00 - 12:00</li>
+        <li class="horario-fechado">
+          <span class="dia">Domingo</span>
+          <span class="hora fechado">Fechado</span>
+        </li>
+        <li>
+          <span class="dia">Segunda a Sexta</span>
+          <span class="hora">08:00 – 20:30</span>
+        </li>
+        <li>
+          <span class="dia">Sábado</span>
+          <span class="hora">08:00 – 12:00</span>
+        </li>
       </ul>
-      <p class="almoco">*Horário de almoço: 12:00 - 13:00</p>
+
+      <p class="almoco">* Intervalo de almoço: 12:00 – 13:00</p>
     </div>
+
   </div>
+
+  <!-- Barra de ouro no topo -->
+  <div class="footer-gold-bar"></div>
 </footer>

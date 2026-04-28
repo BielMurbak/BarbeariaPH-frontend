@@ -65,6 +65,9 @@
               <td class="td-valor">R$ {{ formatarValor(ag) }}</td>
               <td class="td-acoes">
                 @if (ag.id) {
+                  <button class="btn-acao btn-concluir" title="Marcar como Concluído">
+                    <i class="fas fa-check"></i>
+                  </button>
                   <button class="btn-acao btn-editar" (click)="editar(ag)" title="Editar"><i class="fas fa-pen"></i></button>
                   <button class="btn-acao btn-excluir" (click)="excluir(ag)" title="Excluir"><i class="fas fa-trash"></i></button>
                 }

@@ -27,6 +27,9 @@
         <h2>Meus Agendamentos</h2>
         <span class="badge-count">{{ agendamentos.length }}</span>
       </div>
+      <button class="btn-novo-agendamento" (click)="abrirModalAgendamento()">
+        <i class="fas fa-plus"></i> Novo Agendamento
+      </button>
     </div>
 
     <div class="tabela-container">
@@ -220,6 +223,12 @@
     </div>
 
     <div class="form-group">
+      <label>Observações</label>
+      <textarea class="form-control" [(ngModel)]="agendamentoEditando.observacoes" 
+        placeholder="Adicionais e observações sobre o serviço" rows="3"></textarea>
+    </div>
+
+    <div class="form-group">
       <label>Data</label>
       <input type="date" class="form-control"
         [(ngModel)]="agendamentoEditando.data"
@@ -240,7 +249,7 @@
     </div>
 
     <div class="form-group">
-      <label>Valor</label>
+      <label>Valor Total</label>
       <input type="text" class="form-control"
         [value]="'R$ ' + (agendamentoEditando.preco || agendamentoEditando.profissionalServicoEntity.preco || 0).toFixed(2)"
         readonly />

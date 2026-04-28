@@ -1,118 +1,196 @@
+// ── Variáveis ─────────────────────────────────────────────────────────────────
+$gold:        #BC9E5F;
+$gold-dark:   #b8962e;
+$gold-light:  rgba(188, 158, 95, 0.1);
+$gold-border: rgba(188, 158, 95, 0.3);
+$bg:          rgb(233, 229, 219);
+$text-dark:   #1a1a1b;
+$text-mid:    #4a4540;
+$text-muted:  #7a7060;
+
+// ── Seção ─────────────────────────────────────────────────────────────────────
 .servicos {
-  background-color: rgb(233, 229, 219); /* mesmo tom da seção sobre nós */
+  background-color: $bg;
+  padding: 80px 40px;
   text-align: center;
+  position: relative;
 }
 
-
-
-.titulo-servicos {
-  font-size: 2.5rem;
-  margin-bottom: 60px;
-  color: #000;
-}
-
-.grid-servicos {
-  display: flex;
-  gap: 100px;
-  justify-content: center;
-  flex-wrap: wrap; /* permite quebrar em linha quando for mobile */
-}
-
-.quadrado-servico {
-  background-color: #fff;
-  flex: 0 0 300px;
-  width: 400px;
-  height: 300px;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+// ── Cabeçalho ─────────────────────────────────────────────────────────────────
+.titulo-servicos-wrap {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 50px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 64px;
+}
+
+.titulo-servicos {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $text-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin: 0;
+}
+
+.titulo-servicos-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before,
+  &::after {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, $gold);
+  }
+
+  &::after {
+    background: linear-gradient(270deg, transparent, $gold);
+  }
+
+  span {
+    color: $gold;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+}
+
+// ── Grid de serviços ──────────────────────────────────────────────────────────
+.grid-servicos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto 56px;
+}
+
+// ── Card individual ───────────────────────────────────────────────────────────
+.quadrado-servico {
+  background: #fff;
+  border-radius: 10px;
+  padding: 32px 24px 28px;
+  text-align: center;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+
+  // faixa dourada topo
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, $gold, $gold-dark);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.13);
+
+    &::before { opacity: 1; }
+  }
+}
+
+// Ícone decorativo do serviço
+.servico-icone {
+  width: 48px;
+  height: 48px;
+  background: $gold-light;
+  border: 1.5px solid $gold-border;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+
+  i {
+    color: $gold-dark;
+    font-size: 1.2rem;
+  }
 }
 
 .quadrado-servico h3 {
-  font-size: 1.7rem;
-  color: #000;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: $text-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
 .quadrado-servico p {
-  font-size: 1.2rem;
-  line-height: 1.5;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: $text-muted;
+  margin: 0;
+  flex: 1;
 }
 
-.servico-card .btn-agendar {
-  font-size: 2rem;   /* texto menor */
-  padding: 8px 14px;   /* menos espaço interno */
-}
-
-.quadrado-servico .btn-agendar {
-  margin-top: auto; /* empurra o botão para baixo */
-}
-
-/* Botão maior centralizado */
-.agendamento-geral {
-  margin-top: 40px;
-}
-
-
-.agendamento-geral .btn-geral {
-  padding: 15px 30px;
-  font-size: 1.3rem;
-}
-
-/* botões de serviço */
+// ── Botão Agendar (nos cards) ─────────────────────────────────────────────────
 .btn-agendar {
-  font-size: 1rem;          /* tamanho do texto */
-  padding: 12px 20px;       /* tamanho do botão */
-  background-color: #BC9E5F; /* cor de fundo dourada */
-  color: #fff;              /* cor do texto */
-  border-radius: 6px;       /* cantos arredondados */
-  text-decoration: none;    
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding: 10px 24px;
+  background: $gold;
+  color: #fff;
+  border-radius: 4px;
+  font-weight: 700;
   border: none;
   outline: none;
   cursor: pointer;
-  transition: 0.3s;         /* animação suave ao passar o mouse */
-  display: inline-block;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.25s, transform 0.2s, box-shadow 0.2s;
+  margin-top: auto;
+
+  &:hover {
+    background: $gold-dark;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(188, 158, 95, 0.38);
+  }
+
+  &:focus,
+  &:active { outline: none; box-shadow: none; }
 }
 
-.btn-agendar:hover {
-  background-color: #b8962e; /* cor de fundo ao passar o mouse */
-  color: #fff;
-  box-shadow: none;
+// ── Botão geral ───────────────────────────────────────────────────────────────
+.agendamento-geral {
+  margin-top: 8px;
 }
 
-.btn-agendar:focus,
-.btn-agendar:active {
-  outline: none;
-  box-shadow: none;
+.btn-geral {
+  padding: 15px 44px !important;
+  font-size: 0.92rem !important;
+  letter-spacing: 0.1em;
 }
 
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media (max-width: 1200px) {
+  .grid-servicos { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+}
 
-
-/* Responsividade */
 @media (max-width: 768px) {
-  .grid-servicos {
-    flex-direction: column; /* um embaixo do outro */
-    align-items: center;
-    gap: 0px;
-  }
-
-  .quadrado-servico {
-    max-width: 90%;
-  }
-}
-
-@media (max-width: 1500px) and (min-width: 1024px) {
-  .grid-servicos {
-    justify-content: center; /* mantém centralizado */
-  }
-
-  .quadrado-servico {
-    flex: 0 0 35%; /* cada quadrado ocupa cerca de metade da linha */
-    margin-bottom: 35px; /* espaço entre linhas */
-  }
+  .servicos { padding: 56px 20px; }
+  .grid-servicos { grid-template-columns: 1fr; max-width: 400px; gap: 16px; }
+  .titulo-servicos { font-size: 1.6rem; }
 }

@@ -1,4 +1,33 @@
 @use 'mdb-angular-ui-kit/assets/scss/mdb.scss' as *;
 @import '@fortawesome/fontawesome-free/css/all.css';
 
+// ── Reset & base global ───────────────────────────────────────────────────────
+::before, *::after {
+  box-sizing: border-box;
+}
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Georgia', serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ── Variáveis CSS globais ─────────────────────────────────────────────────────
+:root {
+  --gold:         #BC9E5F;
+  --gold-dark:    #b8962e;
+  --gold-light:   rgba(188, 158, 95, 0.12);
+  --gold-border:  rgba(188, 158, 95, 0.35);
+  --bg-cream:     rgb(233, 229, 219);
+  --bg-dark:      rgb(26, 26, 27);
+  --bg-header:    rgb(35, 35, 36);
+  --text-dark:    #1a1a1b;
+  --text-mid:     #4a4540;
+  --text-muted:   #7a7060;
+}

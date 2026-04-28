@@ -1,104 +1,212 @@
+// ── Variáveis ─────────────────────────────────────────────────────────────────
+$gold:        #BC9E5F;
+$gold-dark:   #b8962e;
+$gold-light:  rgba(188, 158, 95, 0.1);
+$gold-border: rgba(188, 158, 95, 0.3);
+$bg:          rgb(233, 229, 219);
+$text-dark:   #1a1a1b;
+$text-mid:    #4a4540;
+$text-muted:  #7a7060;
+
+// ── Seção ─────────────────────────────────────────────────────────────────────
 .contatos {
-  background-color: #E9E5DB;
-  padding: 60px 20px;
+  background-color: $bg;
+  padding: 80px 40px;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
-.container-contatos {
-  display: flex;
-  justify-content: center; /* centraliza os dois blocos */
-  gap: 80px; /* espaço maior entre os blocos */
-  max-width: 1300px; /* largura máxima do container */
-  margin: 0 auto; /* centraliza na página */
-}
-
-.bloco-localizacao,
-.bloco-contatos {
-  flex: 1;
-  max-width: 650px; /* largura maior para cada bloco */
+// ── Cabeçalho ─────────────────────────────────────────────────────────────────
+.contato-titulo-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center; /* centraliza conteúdo dentro da div */
-  gap: 50px; /* espaçamento interno entre elementos */
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 56px;
 }
 
-.bloco-localizacao h3,
-.bloco-contatos h3 {
-  font-size: 2.8rem; /* títulos maiores */
-  text-align: center;
-  margin-bottom: 20px;
+.contato-titulo {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $text-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin: 0;
 }
 
+.contato-titulo-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before,
+  &::after {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, $gold);
+  }
+
+  &::after {
+    background: linear-gradient(270deg, transparent, $gold);
+  }
+
+  span {
+    color: $gold;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+}
+
+// ── Container ─────────────────────────────────────────────────────────────────
+.container-contatos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+// ── Blocos ────────────────────────────────────────────────────────────────────
+.bloco-localizacao,
+.bloco-contatos {
+  background: #fff;
+  border-radius: 10px;
+  padding: 32px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, $gold, $gold-dark);
+  }
+}
+
+// ── Título dos blocos ─────────────────────────────────────────────────────────
+.titulo-bloco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: $text-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+
+  i {
+    color: $gold;
+    font-size: 1rem;
+    width: 18px;
+    text-align: center;
+  }
+}
+
+// ── Mapa ──────────────────────────────────────────────────────────────────────
 .bloco-localizacao iframe {
-  width: 100%; /* ocupa toda a largura do bloco */
-  height: 450px; /* aumenta altura do mapa */
+  width: 100%;
+  height: 260px;
   border: 0;
   border-radius: 8px;
+  display: block;
 }
 
-.bloco-localizacao p,
-.bloco-contatos p {
-  font-size: 2rem; /* textos maiores */
-  line-height: 2;    /* espaçamento maior entre linhas */
-  text-align: center; /* centraliza os textos */
-}
-
-.bloco-localizacao a,
-.bloco-contatos a {
-  color: #BC9E5F;
-  font-size: 2rem; /* links maiores e mais visíveis */
+.endereco-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: $gold-dark;
+  font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
+  line-height: 1.5;
+  transition: color 0.2s;
+
+  i { color: $gold; margin-top: 2px; flex-shrink: 0; }
+
+  &:hover { color: $gold; text-decoration: underline; }
+}
+
+// ── Links de contato ──────────────────────────────────────────────────────────
+.contatos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .link-contato {
   display: flex;
   align-items: center;
-  gap: 10px; /* espaço entre ícone e texto */
-  color: #BC9E5F;
+  gap: 14px;
+  color: $text-dark;
   text-decoration: none;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,0.07);
+  background: #fafaf8;
+  transition: all 0.22s;
+
+  &:hover {
+    border-color: $gold-border;
+    background: $gold-light;
+    color: $text-dark;
+
+    .contato-icone { transform: scale(1.08); }
+  }
+}
+
+.contato-icone {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  transition: transform 0.22s;
+}
+
+.contato-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contato-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: $text-muted;
+  font-weight: 700;
+}
+
+.contato-valor {
+  font-size: 0.95rem;
   font-weight: 600;
+  color: $text-dark;
 }
 
-.link-contato:hover {
-  text-decoration: underline;
-}
-
-.icone-contato {
-  width: 50px; /* tamanho do ícone */
-  height: 50px;
-}
-
-.bloco-localizacao a:hover,
-.bloco-contatos a:hover {
-  text-decoration: underline;
-}
-
-/* Responsividade para tablets e celulares */
-@media (max-width: 768px) {
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media (max-width: 900px) {
   .container-contatos {
-    flex-direction: column; 
-    align-items: center;
-    gap: 40px; /* mantém espaçamento entre os blocos */
+    grid-template-columns: 1fr;
+    max-width: 560px;
   }
+  .contatos { padding: 56px 20px; }
+}
 
+@media (max-width: 480px) {
   .bloco-localizacao,
-  .bloco-contatos {
-    max-width: 95%; /* ocupa quase toda a largura */
-  }
-
-  .bloco-localizacao iframe {
-    height: 400px; /* mapa um pouco menor no mobile */
-  }
-
-  .bloco-localizacao h3,
-  .bloco-contatos h3 {
-    font-size: 2.2rem; /* títulos menores no mobile */
-  }
-
-  .bloco-localizacao p,
-  .bloco-contatos p,
-  .bloco-localizacao a,
-  .bloco-contatos a {
-    font-size: 1.4rem; /* mantém visibilidade no mobile */
-  }
+  .bloco-contatos { padding: 24px 20px; }
+  .bloco-localizacao iframe { height: 220px; }
 }

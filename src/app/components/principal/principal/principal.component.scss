@@ -1,6 +1,9 @@
-$gold:      #BC9E5F;
-$gold-dark: #b8962e;
+// ── Variáveis ─────────────────────────────────────────────────────────────────
+$gold:       #BC9E5F;
+$gold-dark:  #b8962e;
+$gold-glow:  rgba(188, 158, 95, 0.45);
 
+// ── Hero Principal ────────────────────────────────────────────────────────────
 .pagina-principal {
   position: relative;
   min-height: 100vh;
@@ -11,107 +14,207 @@ $gold-dark: #b8962e;
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
+  overflow: hidden;
 }
 
+// Overlay em gradiente dramático
 .pagina-principal::before {
   content: "";
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.4) 100%);
+  inset: 0;
+  background:
+    linear-gradient(
+      110deg,
+      rgba(0, 0, 0, 0.78) 0%,
+      rgba(0, 0, 0, 0.48) 55%,
+      rgba(0, 0, 0, 0.28) 100%
+    );
   z-index: 0;
+}
+
+// Faixa decorativa dourada na esquerda
+.pagina-principal::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent 0%, $gold 30%, $gold 70%, transparent 100%);
+  z-index: 1;
+  opacity: 0.7;
 }
 
 .pagina-principal > * { position: relative; z-index: 1; }
 
+// ── Conteúdo do Hero ──────────────────────────────────────────────────────────
 .hero-content {
-  margin-left: 72px;
+  margin-left: 88px;
   margin-top: auto;
   margin-bottom: auto;
-  max-width: 620px;
+  max-width: 640px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 2rem 0;
+  gap: 20px;
+  padding: 2.5rem 0;
+  animation: heroFadeIn 0.9s ease both;
 }
 
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// Linha decorativa
 .hero-linha-ouro {
-  width: 56px;
-  height: 3px;
-  background: $gold;
-  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 2px;
+    background: $gold;
+    border-radius: 2px;
+  }
+
+  &::after {
+    content: "✦";
+    color: $gold;
+    font-size: 0.7rem;
+    opacity: 0.8;
+  }
 }
 
+// ── Tipografia ────────────────────────────────────────────────────────────────
 .slogan {
-  font-size: 3.8rem;
+  font-size: 4rem;
   color: #fff;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  text-shadow: 0 2px 20px rgba(0,0,0,.3);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-shadow: 0 3px 32px rgba(0, 0, 0, 0.4);
 }
 
-.slogan-destaque { color: $gold; }
+.slogan-destaque {
+  color: $gold;
+  display: block;
+  font-style: italic;
+  font-weight: 700;
+}
 
 .sub-slogan {
-  font-size: 1.2rem;
-  color: rgba(255,255,255,.82);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.78);
   font-weight: 300;
-  line-height: 1.6;
-  max-width: 480px;
+  line-height: 1.65;
+  max-width: 460px;
+  letter-spacing: 0.01em;
 }
 
+// ── Botões ────────────────────────────────────────────────────────────────────
 .hero-botoes {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .btn-agendar {
-  font-size: 1rem;
-  padding: 14px 32px;
+  font-size: 0.95rem;
+  padding: 15px 36px;
   background: $gold;
   color: #fff;
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 700;
   border: none;
   outline: none;
   cursor: pointer;
-  transition: background .25s, transform .2s;
-  letter-spacing: .03em;
-  &:hover { background: $gold-dark; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(188,158,95,.4); }
-  &:focus, &:active { outline: none; box-shadow: none; }
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+
+  &:hover {
+    background: $gold-dark;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px $gold-glow;
+  }
+
+  &:focus,
+  &:active { outline: none; box-shadow: none; }
 }
 
 .btn-outline-hero {
-  font-size: 1rem;
-  padding: 14px 28px;
+  font-size: 0.95rem;
+  padding: 13px 30px;
   background: transparent;
   color: #fff;
-  border: 2px solid rgba(255,255,255,.6);
-  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .25s;
-  letter-spacing: .03em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  &:hover { border-color: $gold; color: $gold; }
+  gap: 8px;
+  transition: all 0.25s;
+
+  &::after {
+    content: "↓";
+    font-size: 0.85rem;
+    transition: transform 0.25s;
+  }
+
+  &:hover {
+    border-color: $gold;
+    color: $gold;
+
+    &::after { transform: translateY(3px); }
+  }
+}
+
+// ── Badge decorativo ──────────────────────────────────────────────────────────
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(188, 158, 95, 0.3);
+  border-radius: 3px;
+  padding: 7px 16px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  width: fit-content;
+
+  span { color: $gold; font-weight: 700; }
+}
+
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media (max-width: 992px) {
+  .hero-content { margin-left: 52px; }
+  .slogan { font-size: 3.4rem; }
 }
 
 @media (max-width: 768px) {
-  .hero-content { margin-left: 24px; max-width: 90%; }
-  .slogan { font-size: 2.6rem; }
+  .hero-content { margin-left: 28px; max-width: 92%; }
+  .slogan { font-size: 2.8rem; }
   .pagina-principal { background-attachment: scroll; }
 }
+
 @media (max-width: 580px) {
-  .hero-content { margin-left: 20px; }
-  .slogan { font-size: 2.2rem; }
+  .hero-content { margin-left: 22px; gap: 16px; }
+  .slogan { font-size: 2.3rem; }
   .sub-slogan { font-size: 1rem; }
-  .btn-agendar, .btn-outline-hero { width: 100%; text-align: center; justify-content: center; }
+  .btn-agendar,
+  .btn-outline-hero { width: 100%; text-align: center; justify-content: center; }
 }
+
 @media (max-width: 380px) {
-  .slogan { font-size: 1.9rem; }
+  .slogan { font-size: 2rem; }
 }

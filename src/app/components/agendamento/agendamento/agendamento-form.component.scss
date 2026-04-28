@@ -556,6 +556,7 @@ $radius-lg:   14px;
     height: auto;
     max-height: 92vh;
     overflow-y: auto;
+    overflow-x: hidden; // evita sobreposição horizontal
   }
 
   .modal-agendamento:has(.container-do-resumo) {
@@ -569,6 +570,9 @@ $radius-lg:   14px;
     flex-direction: row;
     justify-content: space-between;
     gap: 1rem;
+    // garante que não flutue sobre o conteúdo
+    position: relative;
+    z-index: 0;
 
     &::before { height: 3px; }
   }
@@ -584,21 +588,42 @@ $radius-lg:   14px;
     grid-template-columns: 1fr;
     width: 97%;
     height: auto;
-    max-height: 92vh;
+    max-height: 90vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    // layout em coluna puro — sem grid que cause sobreposição
+    display: flex;
+    flex-direction: column;
   }
 
-  .modal-agendamento:has(.container-do-resumo) {
-    grid-template-columns: 1fr;
-  }
-
+  // painel esquerdo fica abaixo do conteúdo, não flutua
   .modal-agendamento-left {
-    order: 2;
+    order: 3; // sempre por último
     padding: 14px 16px;
     flex-direction: column;
     gap: .75rem;
+    // remove posicionamento absoluto implícito
+    position: static;
+    flex-shrink: 0;
 
     &::before { display: none; }
+  }
+
+  // conteúdo principal no topo
+  .modal-agendamento-right {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+  }
+
+  // resumo no meio (quando existir)
+  .container-do-resumo {
+    order: 2;
+    max-height: 170px;
+    border-left: none;
+    border-bottom: 2px solid $border-soft;
+    overflow-y: auto;
+    flex-shrink: 0;
   }
 
   .modal-agendamento-servicos-container { max-width: 100%; }
@@ -608,12 +633,4 @@ $radius-lg:   14px;
   .calendario-dias { gap: 3px; }
 
   .dia, .dia-semana { padding: 10px 4px; font-size: .75rem; }
-
-  .container-do-resumo {
-    order: -1;
-    max-height: 190px;
-    border-left: none;
-    border-bottom: 2px solid $border-soft;
-    overflow-y: auto;
-  }
 }

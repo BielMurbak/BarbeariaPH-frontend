@@ -1,45 +1,45 @@
 <section id="servicos" class="servicos">
-  <h2 class="titulo-servicos">Serviços</h2>
+
+  <div class="titulo-servicos-wrap">
+    <h2 class="titulo-servicos">Serviços</h2>
+    <div class="titulo-servicos-linha"><span>✦ o que fazemos ✦</span></div>
+  </div>
 
   <div class="grid-servicos">
-    <!-- Quadrado Corte -->
+
     <div class="quadrado-servico">
+      <div class="servico-icone"><i class="fas fa-cut"></i></div>
       <h3>Corte</h3>
-      <p>
-        Descrição do corte, estilo clássico ou moderno, feito com atenção aos
-        detalhes.
-      </p>
-      <button class="btn-agendar" (click)="abrirModal()"  >Agendar</button>
-    </div>
-
-    <!-- Quadrado Barba -->
-    <div class="quadrado-servico"  >
-      <h3>Barba</h3>
-      <p>Raspar, aparar e modelar a barba com precisão e cuidado.</p>
+      <p>Estilo clássico ou moderno, feito com atenção aos detalhes e técnica apurada.</p>
       <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
     </div>
 
-    <!-- Quadrado Sobrancelha -->
-    <div class="quadrado-servico" >
-      <h3>Sobrancelha</h3>
-      <p>Design e limpeza da sobrancelha, mantendo o estilo e simetria.</p>
-      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
-    </div>
-
-    <!-- Quadrado Combo -->
     <div class="quadrado-servico">
-      <h3>Combo</h3>
-      <p>Corte + Barba + Sobrancelha, atendimento completo e personalizado.</p>
+      <div class="servico-icone"><i class="fas fa-user-tie"></i></div>
+      <h3>Barba</h3>
+      <p>Raspar, aparar e modelar a barba com precisão, cuidado e produtos de qualidade.</p>
       <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
-      
     </div>
+
+    <div class="quadrado-servico">
+      <div class="servico-icone"><i class="fas fa-eye"></i></div>
+      <h3>Sobrancelha</h3>
+      <p>Design e limpeza da sobrancelha, mantendo o estilo, simetria e harmonia do rosto.</p>
+      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
+    </div>
+
+    <div class="quadrado-servico">
+      <div class="servico-icone"><i class="fas fa-star"></i></div>
+      <h3>Combo</h3>
+      <p>Corte + Barba + Sobrancelha. Atendimento completo e personalizado em uma só visita.</p>
+      <button class="btn-agendar" (click)="abrirModal()">Agendar</button>
+    </div>
+
   </div>
 
-  <!-- Botão maior centralizado -->
   <div class="agendamento-geral">
-    <button class="btn-agendar btn-geral" (click)="abrirModal()">Agendar Todos os Serviços</button>
+    <button class="btn-agendar btn-geral" (click)="abrirModal()">Agendar Horário</button>
   </div>
 
-  <app-agendamento [showModal]="showModal" (modalClosed)="fecharModal()">
-  </app-agendamento>
+  <app-agendamento [showModal]="showModal" (modalClosed)="fecharModal()"></app-agendamento>
 </section>

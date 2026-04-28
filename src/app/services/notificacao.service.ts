@@ -5,7 +5,7 @@ export interface Notificacao {
   id: string;
   clienteId: number;
   mensagem: string;
-  tipo: 'EDITADO' | 'CANCELADO';
+  tipo: 'EDITADO' | 'CANCELADO' | 'CONCLUIDO';
   timestamp: Date;
   lida: boolean;
 }
@@ -24,7 +24,7 @@ export class NotificacaoService {
     }
   }
 
-  adicionarNotificacao(clienteId: number, mensagem: string, tipo: 'EDITADO' | 'CANCELADO') {
+  adicionarNotificacao(clienteId: number, mensagem: string, tipo: 'EDITADO' | 'CANCELADO' | 'CONCLUIDO') {
     const notificacoes = this.notificacoesSubject.value;
     const novaNotificacao: Notificacao = {
       id: Date.now().toString(),
