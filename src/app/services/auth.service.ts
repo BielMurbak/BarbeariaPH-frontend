@@ -39,8 +39,8 @@ export class AuthService {
     }
   }
 
-  loginJWT(celular: string, senha: string): Observable<{token: string, role: string}> {
-    return this.http.post<{token: string, role: string}>(`${this.baseUrl}/auth/login`, {
+  loginJWT(celular: string, senha: string): Observable<{access_token: string, refresh_token: string, expires_in: number}> {
+  return this.http.post<{access_token: string, refresh_token: string, expires_in: number}>(`${this.baseUrl}/auth/login`, {
       celular: celular,
       senha: senha
     });
